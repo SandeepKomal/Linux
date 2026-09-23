@@ -1,85 +1,213 @@
+# Linux Commands — Practical DevOps & Cloud Reference
 
-1) cd folder-name - Change Directory:   It is used to change path/location/directory to other path/location/directory.
+A hands-on Linux command reference for DevOps, cloud, SRE, system administration, Docker, Kubernetes, and CI/CD work.
 
-2) pwd - Present working Directory: To check current path.
+## Quick navigation
+- Files & directories
+- Users & groups
+- Permissions & ownership
+- Processes & services
+- Text processing
+- Networking
+- Packages
+- Archives & transfers
+- Disk & storage
+- System diagnostics
+- DevOps troubleshooting
 
-3) ls -  To list the files or folders in current path
+## Files & directories
+```bash
+pwd
+ls -lah
+cd /var/log
+mkdir app
+touch app.log
+cp file.txt /tmp/
+mv old new
+rm file.txt
+find /var/log -name '*.log'
+file app.jar
+stat app.log
+```
+> `ll` is commonly an alias for `ls -l`, but is not guaranteed to exist on every Linux system.
 
-4) ll - To list the files and folders with RWX permissions.
+## Viewing and editing text
+```bash
+cat file.txt
+less file.txt
+head -n 20 app.log
+tail -n 50 app.log
+tail -f /var/log/app.log
+vi file.txt
+grep -i 'error' app.log
+grep -R 'timeout' /etc/myapp/
+```
 
-5) mv - To moves files from location/folder to other folders
+## Users & groups
+```bash
+sudo useradd -m appuser
+sudo passwd appuser
+whoami
+id appuser
+cat /etc/passwd
+sudo groupadd appteam
+sudo usermod -aG appteam appuser
+groups appuser
+cat /etc/group
+sudo -iu appuser
+sudo -i
+```
+Avoid using a root shell for routine work. Use `sudo` for scoped administrative commands where practical.
 
-6) rm - To remove/delete files 
+## Permissions & ownership
+```bash
+ls -l
+chmod 640 config.yml
+chmod +x deploy.sh
+chown appuser:appteam config.yml
+chmod 600 ~/.ssh/id_ed25519
+chmod 644 app.conf
+chmod 755 deploy.sh
+```
+Be careful with recursive `chmod -R` and `chown -R`; broad permission changes can create security problems.
 
-7) rm -rf -> To remove files or folders recursively
+## Processes & services
+```bash
+ps aux
+ps -ef
+top
+pgrep -af nginx
+kill -TERM <PID>
+kill -KILL <PID>
+systemctl status nginx
+sudo systemctl start nginx
+sudo systemctl stop nginx
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+journalctl -u nginx
+journalctl -u nginx -f
+```
+Prefer `TERM` before `KILL` so applications have an opportunity to shut down cleanly.
 
-8) useradd  username-> To create a new user in linux
+## Networking
+Modern Linux systems commonly use `ip` rather than the older `ifconfig`.
+```bash
+ip addr
+ip route
+ip link
+ping -c 4 8.8.8.8
+curl -I https://example.com
+curl -v https://example.com
+getent hosts example.com
+ss -tulpn
+ss -lntp
+sudo lsof -i :8080
+```
 
-9) touch  -> To create a text file.
+## Packages
+### RHEL / Fedora / Amazon Linux style systems
+```bash
+sudo dnf install nginx
+sudo dnf update
+rpm -qa
+rpm -qi nginx
+sudo dnf remove nginx
+```
+Older environments may use `yum`.
 
-10) mkdir -> To create a new folder/directory
+### Debian / Ubuntu
+```bash
+sudo apt update
+sudo apt install nginx
+sudo apt upgrade
+dpkg -l
+sudo apt remove nginx
+```
 
-11) vi -> To edit the text file
+## Archives & transfers
+```bash
+tar -czf app.tar.gz app/
+tar -xzf app.tar.gz
+wget https://example.com/file.zip
+curl -LO https://example.com/file.zip
+scp app.tar.gz user@server:/tmp/
+rsync -avz ./app/ user@server:/opt/app/
+```
 
-12) cat -> To view the contents of text file
+## Disk & storage
+```bash
+df -h
+du -sh .
+du -sh /var/* 2>/dev/null | sort -h
+lsblk
+find /var -type f -size +500M -ls 2>/dev/null
+mount
+findmnt
+```
 
-13) sudo -> Admin priviliges
+## System diagnostics
+```bash
+uname -a
+hostnamectl
+uptime
+free -h
+lscpu
+lsblk
+dmesg | tail -n 50
+echo "$PATH"
+env
+history
+command -v docker
+command -v kubectl
+```
 
-14) sudo su -> To login as root user
+## Shell operators
+```bash
+command1 && command2
+command1 || command2
+command1 ; command2
+command > file
+command >> file
+command 2> error.log
+command | grep pattern
+```
 
-15) sudo su - username -> To login as specific user
+## DevOps troubleshooting workflow
+```text
+Reachability
+   -> CPU / memory / disk
+   -> process / systemd service
+   -> listening ports
+   -> application logs
+   -> DNS / route / firewall
+   -> permissions / dependencies
+```
+Useful first checks:
+```bash
+uptime
+free -h
+df -h
+ps aux --sort=-%cpu | head
+ps aux --sort=-%mem | head
+ss -lntp
+journalctl -u <service> --since '30 min ago'
+```
 
-16) whoami -> To check current user
+## Safety notes
+Commands such as `rm -rf`, `kill -KILL`, recursive `chmod`, recursive `chown`, package removal, and filesystem operations can cause irreversible changes.
+Before destructive work on a server, confirm the target, verify whether it is production, and prefer the narrowest reversible action.
 
-17) cat /etc/passwd -> To view the total number users created in our system
-
-18) cd -> To enter default user folder
-
-19) cd / -> To enter root directory
-
-20) cd .. -> go to previous directory
-
-21) echo -> to print the contents of file
-
-22) username passwd -> To change the password for the user
-
-23) nohup -> To run the applications in the background
-
-24) ifconfig -> To display the system/server ip address
-
-25) chmod -> To change mode of directory
-
-26) usrmod  -> To command to add a user to a group, change a user shell, login name, home directory, and more.
-
-27) grep -> To concatenate the text or two different commands
-
-28) kill -> To stop current running processes
-
-29) find -> used to search any file 
-
-30) wget/curl  -> To download files from internet
-
-31) yum -> to download and install software packages and dependencies from RPM repository
-
-32) ls -a  -> To list all files (including hidden files) and folders in current directory
-
-33) cp -i from_path  to_path    -> copy files from one location to other location
-
-34) clear -> To clear the screen(Shorcut-CTRL + L)
-
-35) rpm -qa  -> To display the installed packages
-
-36) rpm -qi   -> To display installed packages along with package version and description
-
-37) rpm -e  -> Erase packages
-
-38) chown  -> To change ownership of a file or folder
-
-39) groupadd  -> To create a group
-
-40) usermod -a -G groupname username  -> To add an user to the group
-
-41) cat /etc/group -> To view the total number of groups created in our system
-
-
-
+## Learning path
+```text
+Linux basics
+  -> Files & permissions
+  -> Users & processes
+  -> systemd
+  -> Networking
+  -> Storage
+  -> Shell scripting
+  -> Logs & troubleshooting
+  -> Docker
+  -> Kubernetes
+  -> CI/CD
+```
