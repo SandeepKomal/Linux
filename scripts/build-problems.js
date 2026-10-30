@@ -14,7 +14,7 @@ const rich = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
 // The site's scripts attach themselves to window, as in the browser.
 function load() {
   global.window = global.window || {};
-  for (const f of ["data.js", "sim.js", "sim-ops.js", "world.js", "scenarios.js"]) require(path.join(root, "site", f));
+  for (const f of ["data.js", "sim.js", "sim-ops.js", "sim-admin.js", "world.js", "rhel.js", "scenarios.js"]) require(path.join(root, "site", f));
   return { Q: window.QUEST, titles: Object.fromEntries(window.LQSim.SCENARIOS.map((s) => [s.id, s.title])) };
 }
 

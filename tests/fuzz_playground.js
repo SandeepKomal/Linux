@@ -5,7 +5,7 @@
 const path = require("path");
 const assert = require("assert");
 
-for (const f of ["sim.js", "sim-ops.js", "world.js", "scenarios.js"]) require(path.resolve(__dirname, "../site", f));
+for (const f of ["sim.js", "sim-ops.js", "sim-admin.js", "world.js", "rhel.js", "scenarios.js"]) require(path.resolve(__dirname, "../site", f));
 const { SCENARIOS, Host, shell, CMDS } = globalThis.LQSim;
 
 let seed = 20261030;
@@ -19,7 +19,7 @@ const WORDS = [...Object.keys(CMDS), "cd", "export", "umask", "ulimit", "kill", 
   "~", "~/.ssh", "deploy.sh", "./deploy.sh", "*", "/var/lib/php/sessions/*", "'s/a/b/'", "'s/\\r$//'", "'/x/d'", "755", "u+x", "o-rwx", "640", "root:root", "shop:shop",
   "add", "default", "via", "10.0.1.1", "dev", "eth0", "allow", "8080/tcp", "from", "10.0.1.0/24", "example.com", "db.internal", "localhost:8080", "http://localhost/",
   "https://api.payments.example", "@10.0.0.2", "+short", "jq", "install", "update", "net.ipv4.ip_forward=1", "-w", "true", "300", "60", "-", "|", "||", "&&", ";", ">", ">>",
-  "2>&1", "2>/dev/null", "<", "/tmp/x", "$HOME", "$(pwd)", "\"quoted text\"", "'single'", "(", ")", "\\", "$", "#", "=", "PATH=/usr/bin", "EDITOR=true", "-e", "-v", "--", "é"];
+  "2>&1", "2>/dev/null", "<", "/tmp/x", "--permanent", "--add-port=8080/tcp", "--reload", "--list-all", "-Z", "/dev/rl/root", "+20G", "-L", "/swapfile", "2G", "/mnt/shared", "/mnt/reports", "fcontext", "port", "-a", "httpd_sys_content_t", "/srv/shop(/.*)?", "epel-release", "htop", "/etc/logrotate.d/orders", "--vacuum-size=500M", "-T", "x509", "-in", "renew", "certificates", "MemoryMax=1G", "1G", "$HOME", "$(pwd)", "\"quoted text\"", "'single'", "(", ")", "\\", "$", "#", "=", "PATH=/usr/bin", "EDITOR=true", "-e", "-v", "--", "é"];
 
 const rounds = Number(process.argv[2]) || 3000;
 let n = 0;

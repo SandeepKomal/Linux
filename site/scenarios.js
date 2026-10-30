@@ -43,6 +43,14 @@
     }
     return v;
   };
+  // nginx on Rocky: one server block in conf.d, run as the nginx user.
+  const rhelNginx = (h, site) => {
+    h.pkgs.installed.nginx = "1.20.1-14.el9_2.1";
+    h.bin("/usr/sbin/nginx");
+    h.file("/etc/nginx/nginx.conf", "user nginx;\nworker_processes auto;\npid /run/nginx.pid;\nevents { worker_connections 1024; }\nhttp {\n    include /etc/nginx/conf.d/*.conf;\n}\n");
+    h.file("/etc/nginx/conf.d/app.conf", site);
+    enable(h, "nginx.service");
+  };
   const rootUse = (h) => { const m = h.mounts.find((x) => x.mnt === "/"); return h.usage(m).bytes / m.size; };
 
   const RELEASE_SCRIPT = "#!/bin/bash\nset -e\necho \"Deploying release 2026.10.30\"\nmkdir -p /srv/app/releases/2026.10.30\necho \"2026.10.30\" > /srv/app/RELEASE\necho \"Done.\"\n";
@@ -987,7 +995,8 @@
       setup(h) {
         h.mem.swap = 4 * 1024 * 1024;
         h.mem.swapBase = 220 * 1024;
-        h.file("/swap.img", "", { m: 0o600, size: 4 * GiB });
+        h.swaps = [{ path: "/swap.img", kib: 4 * 1024 * 1024 }];
+        h.file("/swap.img", "", { m: 0o600, size: 4 * GiB, swap: true });
         h.fs.get("/etc/fstab").data += "/swap.img\tnone\tswap\tsw\t0\t0\n";
         h.bin("/opt/cache-warmer/bin/warmer");
         unit(h, "cache-warmer.service", svcText({ desc: "Cache warmer", service: "User=app\nExecStart=/opt/cache-warmer/bin/warmer --cache-size 3500m" }));
@@ -1073,6 +1082,305 @@
       hints: ["`journalctl -u gateway -n 5`, then the limit the process really has: `cat /proc/$(pgrep gateway)/limits | grep 'open files'`.", "Max open files 1024. limits.conf applies to PAM logins, not to systemd services, and `ulimit -n` changes only your own shell.", "A drop-in: `sudo mkdir -p /etc/systemd/system/gateway.service.d`, `printf '[Service]\\nLimitNOFILE=65535\\n' | sudo tee /etc/systemd/system/gateway.service.d/limits.conf`, `sudo systemctl daemon-reload`, `sudo systemctl restart gateway`."],
       lesson: "Services take limits from their unit (LimitNOFILE=), not from limits.conf. Check what a process really has in /proc/PID/limits.",
       tries: ["journalctl -u gateway -n 5", "cat /etc/security/limits.conf"]
+    },
+    // --- Added: services, logs, storage, access, memory -----------------------------------
+    {
+      id: "envmissing", title: "Works in my shell, not as a service", level: "06",
+      story: "The reports API starts fine when you run it by hand, but the service fails: DATABASE_URL is not set. It is right there in your ~/.bashrc.",
+      goal: "Give the reports-api service its DATABASE_URL so it starts.",
+      done: "reports-api gets its environment from its unit.",
+      setup(h) {
+        h.bin("/opt/reports/bin/reports");
+        h.fs.get("/home/ubuntu/.bashrc").data += "export DATABASE_URL=postgres://reports@db.internal:5432/reports\n";
+        h.file("/etc/environment", 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"\n');
+        unit(h, "reports-api.service", svcText({ desc: "Reports API", service: "User=app\nExecStart=/opt/reports/bin/reports" }));
+        h.apps["/opt/reports/bin/reports"] = service({ ident: "reports", port: 8095, rss: 74000, check: (hh, x) => (x.env.DATABASE_URL ? null : ["Error: DATABASE_URL is not set", "reports: refusing to start without a database"]) });
+      },
+      won: (h) => active(h, "reports-api.service"),
+      check(h) { return { label: "reports-api", ok: this.won(h), text: L.state(h, "reports-api.service").active }; },
+      hints: ["`journalctl -u reports-api -n 5`, then `echo $DATABASE_URL` in your shell.", "A service does not run your login shell: ~/.bashrc, export and /etc/environment never reach it. `systemctl show reports-api -p Environment` shows what it gets.", "Put it in the unit with a drop-in: `sudo mkdir -p /etc/systemd/system/reports-api.service.d`, `printf '[Service]\\nEnvironment=DATABASE_URL=postgres://reports@db.internal:5432/reports\\n' | sudo tee /etc/systemd/system/reports-api.service.d/env.conf`, `sudo systemctl daemon-reload`, `sudo systemctl restart reports-api`."],
+      lesson: "Services get only what their unit gives them: Environment= or EnvironmentFile= (mode 640 for secrets). Your shell's exports, ~/.bashrc and /etc/environment do not apply.",
+      tries: ["journalctl -u reports-api -n 5", "echo $DATABASE_URL"]
+    },
+    {
+      id: "logrotate", title: "logrotate is not rotating", level: "09",
+      story: "/var/log/orders/orders.log is 11 GB and / is nearly full. There is a logrotate rule for it, yet it has not rotated in weeks.",
+      goal: "Make logrotate rotate the orders log, free the space, and keep it working, with orders still running.",
+      done: "The orders log rotates and the space is back.",
+      setup(h) {
+        h.mounts[0].base = 6.6 * GiB;
+        addUser(h, "orders:x:1006:1006::/srv/orders:/usr/sbin/nologin", "orders:x:1006:");
+        h.dir("/var/log/orders", { g: "orders", m: 0o775 });
+        h.file("/var/log/orders/orders.log", "", { u: "orders", g: "orders", m: 0o640, size: 11.2 * GiB });
+        h.file("/etc/logrotate.d/orders", "/var/log/orders/*.log {\n    daily\n    rotate 7\n    compress\n    missingok\n    notifempty\n    create 0640 orders orders\n}\n");
+        h.bin("/opt/orders/bin/orders");
+        unit(h, "orders.service", svcText({ desc: "Orders service", service: "User=orders\nExecStart=/opt/orders/bin/orders --log /var/log/orders/orders.log" }));
+        h.apps["/opt/orders/bin/orders"] = service({ ident: "orders", port: 8080, rss: 92000, proc: () => ({ fds: [{ fd: 3, path: "/var/log/orders/orders.log", mode: "w" }] }) });
+      },
+      after(h) { for (const d of [3, 2, 1]) h.log("logrotate", 'error: skipping "/var/log/orders/orders.log" because parent directory has insecure permissions (It\'s world writable or writable by group which is not "root") Set "su" directive in config file to tell logrotate which user/group should be used for rotation.', { t: ago(h, d * DAY), pid: 3400 + d, unit: "logrotate.service", prio: 3 }); },
+      won: (h) => {
+        const conf = h.read("/etc/logrotate.d/orders") || "";
+        const p = mainProc(h, "orders.service");
+        return rootUse(h) < 0.7 && Boolean(p) && !p.fds.some((f) => f.deleted) && /copytruncate|postrotate/.test(conf) && (/^\s*su\s/m.test(conf) || !(h.fs.get("/var/log/orders").m & 0o022));
+      },
+      check(h) {
+        const p = mainProc(h, "orders.service");
+        const held = p && p.fds.some((f) => f.deleted);
+        return { label: "/ in use", ok: this.won(h), text: `${Math.ceil(Math.min(1, rootUse(h) / 0.95) * 100)}%${held ? " · orders still writes a deleted file" : !/copytruncate|postrotate/.test(h.read("/etc/logrotate.d/orders") || "") ? " · rule would rotate under a running writer" : ""}` };
+      },
+      hints: ["Run the rule by hand in debug mode: `sudo logrotate -d /etc/logrotate.d/orders`. Then `journalctl -u logrotate`.", "logrotate skips folders that a non-root group can write (/var/log/orders is 775 orders). Add `su orders orders` to the rule. Also: orders keeps its log open, so a rename-and-compress leaves the space held by a deleted file.", "`sudo sed -i 's/^    create .*/    copytruncate\\n    su orders orders/' /etc/logrotate.d/orders`, then `sudo logrotate -f /etc/logrotate.d/orders` and `df -h /`."],
+      lesson: "logrotate refuses insecure folders (fix with su or folder permissions), and a program that keeps its log open needs copytruncate or a postrotate reload, or the space stays held.",
+      tries: ["sudo logrotate -d /etc/logrotate.d/orders", "ls -lh /var/log/orders"]
+    },
+    {
+      id: "journalfull", title: "The journal is eating the disk", level: "09",
+      story: "/ is at 94% on a box that only runs a small API. The biggest folder is /var/log/journal.",
+      goal: "Shrink the journal now and cap it for good.",
+      done: "The journal is small and capped by SystemMaxUse.",
+      setup(h) {
+        h.mounts[0].base = 7.1 * GiB;
+        const J = L.journal.dir;
+        for (let i = 1; i <= 8; i++) h.file(`${J}/system@b1f0c2d4e6a84f2${i}-000623${i}a1c9e2b11.journal`, "", { g: "systemd-journal", m: 0o640, size: 1.1 * GiB, mt: h.clock - (40 - i * 4) * DAY });
+      },
+      won: (h) => L.journal.bytes(h) <= GiB && L.journal.maxUse(h) != null && L.journal.maxUse(h) <= 2 * GiB,
+      check(h) { return { label: "journal on disk", ok: this.won(h), text: `${L.human(L.journal.bytes(h))}${L.journal.maxUse(h) ? `, capped at ${L.human(L.journal.maxUse(h))}` : ", no cap"}` }; },
+      hints: ["`journalctl --disk-usage` and `sudo du -sh /var/log/journal`.", "Archived journal files pile up until journald's default cap (10% of the file system, up to 4 GB per file set). Deleting files by hand leaves the active one open.", "`sudo journalctl --vacuum-size=500M` now; then cap it: `sudo sed -i 's/^#SystemMaxUse=.*/SystemMaxUse=500M/' /etc/systemd/journald.conf` and `sudo systemctl restart systemd-journald`."],
+      lesson: "journalctl --vacuum-size frees space now; SystemMaxUse= in journald.conf keeps it that way. Do not rm journal files.",
+      tries: ["journalctl --disk-usage", "df -h /"]
+    },
+    {
+      id: "nfsstale", title: "Stale file handle", level: "10",
+      story: "After the storage team restored nfs-01 from a snapshot, everything under /mnt/shared fails with Stale file handle.",
+      goal: "Get /mnt/shared working again without rebooting.",
+      done: "/mnt/shared is mounted fresh.",
+      setup(h) {
+        h.world.records["nfs-01"] = "10.0.2.50";
+        h.world.hosts["10.0.2.50"] = { name: "nfs-01", nfs: true, ports: { 2049: {} }, rtt: 0.4 };
+        h.fs.get("/etc/fstab").data += "nfs-01:/exports/shared\t/mnt/shared\tnfs4\tdefaults,_netdev\t0 0\n";
+        h.dir("/mnt/shared/reports");
+      },
+      after(h) {
+        h.mounts.find((m) => m.mnt === "/mnt/shared").stale = true;
+        L.spawn(h, { pid: 3620, user: "app", comm: "rsync", args: "rsync -a /mnt/shared/reports/ /srv/reports/", cwd: "/mnt/shared/reports", start: ago(h, 30 * MIN) });
+      },
+      won: (h) => h.boots === 0 && h.mounts.some((m) => m.mnt === "/mnt/shared" && !m.gone && !m.stale),
+      check(h) { const m = h.mounts.find((x) => x.mnt === "/mnt/shared" && !x.gone); return { label: "/mnt/shared", ok: this.won(h), text: h.boots ? "fixed by a reboot: try without one" : !m ? "not mounted" : m.stale ? "Stale file handle" : "mounted" }; },
+      hints: ["`ls /mnt/shared` and `df -h`. Which mount complains?", "The client holds file handles from before the restore; the server no longer knows them. Remount it. A plain `umount` says busy: something still has it open (`sudo lsof /mnt/shared` hangs here, `ps aux | grep shared` does not).", "`sudo umount -l /mnt/shared` (lazy: detach now), then `sudo mount /mnt/shared` and `ls /mnt/shared`."],
+      lesson: "Stale file handle means the NFS server changed under the client. Unmount (lazily if busy) and mount again; no reboot needed.",
+      tries: ["ls /mnt/shared", "df -h"]
+    },
+    {
+      id: "bruteforce", title: "SSH brute force", level: "12",
+      story: "auth.log grows by thousands of failed logins an hour from addresses all over the internet. Someone enabled password logins for a contractor last month.",
+      goal: "Allow only key logins, and ban addresses that keep trying.",
+      done: "Passwords are off and fail2ban bans repeat offenders.",
+      setup(h) {
+        h.fs.get("/etc/ssh/sshd_config.d/60-cloudimg-settings.conf").data = "# Enabled for the contractor, see ticket OPS-1182\nPasswordAuthentication yes\n";
+        h.fs.get("/etc/ssh/sshd_config").data += "\n# Added after the security review\nPasswordAuthentication no\n";
+        h.pkgs.repo.fail2ban = { ver: "1.0.2-3ubuntu0.1", bins: ["/usr/bin/fail2ban-client"], desc: "ban hosts that cause multiple authentication errors", install: (hh) => {
+          hh.bin("/usr/bin/fail2ban-server");
+          hh.file("/etc/fail2ban/jail.d/defaults-debian.conf", "[sshd]\nenabled = true\nbackend = systemd\n");
+          hh.file("/usr/lib/systemd/system/fail2ban.service", "[Unit]\nDescription=Fail2Ban Service\nAfter=network.target\n\n[Service]\nType=simple\nExecStart=/usr/bin/fail2ban-server -xf start\nRestart=on-failure\n\n[Install]\nWantedBy=multi-user.target\n");
+          hh.link("/etc/systemd/system/multi-user.target.wants/fail2ban.service", "/usr/lib/systemd/system/fail2ban.service");
+          L.start(hh, "fail2ban.service");
+          return ["Created symlink /etc/systemd/system/multi-user.target.wants/fail2ban.service → /usr/lib/systemd/system/fail2ban.service."];
+        } };
+        h.apps["/usr/bin/fail2ban-server"] = (hh) => { hh.f2bBanned = ["203.0.113.77", "198.51.100.23", "192.0.2.140"]; return { ident: "fail2ban-server", proc: { comm: "fail2ban-server", args: "/usr/bin/python3 /usr/bin/fail2ban-server -xf start", rss: 31000 }, log: ["Server ready"] }; };
+        const ips = ["203.0.113.77", "198.51.100.23", "192.0.2.140"];
+        h.everyTick = (hh) => {
+          const sshd = mainProc(hh, "ssh.service");
+          if (!sshd) return;
+          const ip = ips[hh.clock / 1000 % 3];
+          if ((hh.f2bBanned || []).includes(ip)) return;
+          hh.sshFails = (hh.sshFails || 0) + 1;
+          const port = 40000 + (hh.clock / 1000 % 20000);
+          hh.log("sshd", sshd.sshd.passwordauthentication === "yes" ? `Failed password for invalid user admin from ${ip} port ${port} ssh2` : `Connection closed by invalid user admin ${ip} port ${port} [preauth]`, { pid: 3700 + hh.sshFails % 90, unit: "ssh.service" });
+        };
+      },
+      after(h) { for (let i = 0; i < 9; i++) h.log("sshd", `Failed password for invalid user ${["admin", "root", "oracle"][i % 3]} from ${["203.0.113.77", "198.51.100.23", "192.0.2.140"][i % 3]} port ${41000 + i * 37} ssh2`, { t: ago(h, (9 - i) * 20000), pid: 3600 + i, unit: "ssh.service" }); },
+      won: (h) => { const p = mainProc(h, "ssh.service"); return Boolean(p) && p.sshd.passwordauthentication === "no" && active(h, "fail2ban.service"); },
+      check(h) {
+        const p = mainProc(h, "ssh.service");
+        return { label: "sshd", ok: this.won(h), text: `${p && p.sshd.passwordauthentication === "no" ? "keys only" : "password logins allowed"} · ${active(h, "fail2ban.service") ? "fail2ban banning" : "no fail2ban"}` };
+      },
+      hints: ["`sudo tail /var/log/auth.log` (or `journalctl -u ssh -n 10`). Then what sshd really uses: `sudo sshd -T | grep -i passwordauthentication`.", "sshd_config says no at the bottom, but the Include at the top is read first, and the first value wins: sshd_config.d/60-cloudimg-settings.conf says yes.", "`sudo sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config.d/60-cloudimg-settings.conf`, `sudo sshd -t`, `sudo systemctl reload ssh`; then `sudo apt install -y fail2ban` and `sudo fail2ban-client status sshd`."],
+      lesson: "In sshd_config the first value wins, and drop-ins are read first. Check with sshd -T, test with sshd -t before reloading, use keys only, and let fail2ban ban repeat offenders.",
+      tries: ["sudo tail /var/log/auth.log", "sudo sshd -T | grep -i passwordauthentication"]
+    },
+    {
+      id: "certexpired", title: "certificate has expired", level: "12",
+      story: "Browsers show a red warning on the shop since Wednesday. Certificates renew automatically… or used to, before last month's migration.",
+      goal: "Serve a valid certificate now, and make renewal automatic again.",
+      done: "nginx serves a renewed certificate and the renewal timer is on.",
+      setup(h) {
+        withNginx(h);
+        h.fs.get("/etc/nginx/sites-available/default").data += "server {\n\tlisten 443 ssl;\n\tserver_name shop.example;\n\tssl_certificate /etc/letsencrypt/live/shop.example/fullchain.pem;\n\tssl_certificate_key /etc/letsencrypt/live/shop.example/privkey.pem;\n\troot /var/www/html;\n}\n";
+        h.fs.get("/etc/hosts").data += "127.0.0.1\tshop.example\n";
+        h.file("/etc/letsencrypt/live/shop.example/fullchain.pem", "-----BEGIN CERTIFICATE-----\n(practice certificate; the playground reads only its dates)\n-----END CERTIFICATE-----\n", { cert: { cn: "shop.example", notAfter: h.clock - 2 * DAY } });
+        h.file("/etc/letsencrypt/renewal/shop.example.conf", "# renew_before_expiry = 30 days\n[renewalparams]\nauthenticator = nginx\n");
+        h.pkgs.installed.certbot = "2.9.0-1";
+        h.bin("/usr/bin/certbot");
+        h.file("/usr/lib/systemd/system/certbot.service", "[Unit]\nDescription=Certbot\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/certbot -q renew --no-random-sleep-on-renew\n");
+        h.file("/usr/lib/systemd/system/certbot.timer", "[Unit]\nDescription=Run certbot twice daily\n\n[Timer]\nOnCalendar=*-*-* 00,12:00:00\nRandomizedDelaySec=43200\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n");
+      },
+      won: (h) => { const p = mainProc(h, "nginx.service"); return Boolean(p && p.cert && p.cert.notAfter > h.clock + 30 * DAY) && L.enabledState(h, "certbot.timer") === "enabled" && active(h, "certbot.timer"); },
+      check(h) {
+        const p = mainProc(h, "nginx.service");
+        const served = p && p.cert && p.cert.notAfter > h.clock;
+        return { label: "https://shop.example", ok: this.won(h), text: !served ? "certificate has expired" : L.enabledState(h, "certbot.timer") !== "enabled" ? "valid, but nothing will renew it" : "valid, renews automatically" };
+      },
+      hints: ["`curl -I https://shop.example`, then `sudo openssl x509 -enddate -noout -in /etc/letsencrypt/live/shop.example/fullchain.pem` and `sudo certbot certificates`.", "Renew it: `sudo certbot renew`. nginx keeps the old certificate in memory until it reloads. Why did it not renew by itself? `systemctl list-timers` and `systemctl is-enabled certbot.timer`.", "`sudo certbot renew`, `sudo systemctl reload nginx`, then `sudo systemctl enable --now certbot.timer`."],
+      lesson: "Renewing writes a new file; the server must reload to use it. Keep the renewal timer enabled and monitor certificate expiry, not just the renewal job.",
+      tries: ["curl -I https://shop.example", "sudo certbot certificates"]
+    },
+    {
+      id: "nfshang", title: "High load, idle CPU: a hung NFS mount", level: "14",
+      story: "Load average is 7 and climbing on a 2-CPU box, yet the CPUs are idle and there is no disk I/O. df hangs. The reports NFS server, nfs-02, was decommissioned this morning.",
+      goal: "Free the processes stuck on the dead mount.",
+      done: "The hung mount is detached and the load is back to normal.",
+      setup(h) {
+        h.world.records["nfs-02"] = "10.0.2.51";
+        h.world.hosts["10.0.2.51"] = { name: "nfs-02", nfs: true, down: true, ping: false, ports: {} };
+        h.fs.get("/etc/fstab").data += "nfs-02:/exports/reports\t/mnt/reports\tnfs4\tdefaults\t0 0\n";
+        h.dir("/mnt/reports");
+      },
+      after(h) {
+        h.hasNfs = true;
+        h.mounts.push({ dev: "nfs-02:/exports/reports", mnt: "/mnt/reports", type: "nfs4", nfs: true, hung: true, size: 500 * GiB, base: 210 * GiB, inodes: 0, opts: "defaults", server: "nfs-02" });
+        const cmds = ["du -sh /mnt/reports", "ls /mnt/reports/2026", "/usr/bin/python3 /opt/reports/export.py", "find /mnt/reports -name *.csv", "tar -czf /tmp/r.tgz /mnt/reports/q3", "stat /mnt/reports"];
+        cmds.forEach((args, i) => L.spawn(h, { pid: 3801 + i, user: i === 2 ? "app" : "root", comm: args.split(" ")[0].replace(/^.*\//, ""), args, nfs: "/mnt/reports", start: ago(h, (50 - i * 6) * MIN) }));
+        const t = (h.clock - h.boot) / 1000;
+        h.dmesg("nfs: server nfs-02 not responding, still trying", t - 3000);
+        h.dmesg("INFO: task du:3801 blocked for more than 122 seconds.", t - 2800);
+      },
+      won: (h) => !h.procs.some((p) => L.statOf(h, p) === "D"),
+      check(h) { const d = h.procs.filter((p) => L.statOf(h, p) === "D").length; const c = L.cpuStats(h); return { label: "load average", ok: this.won(h), text: `${c.load[0].toFixed(2)}${d ? ` · ${d} processes stuck in D on /mnt/reports` : ""}` }; },
+      hints: ["`top`: high load, near 0% us and wa. `ps -eo pid,stat,cmd | grep ' D'` shows who is waiting, and on what. `df -h` hangs (`df -hl` skips network file systems).", "A hard NFS mount waits forever for its server. Those processes are in D state, so even kill -9 does nothing. `sudo dmesg | tail` says the server is not responding.", "Detach the mount so their I/O fails: `sudo umount -f -l /mnt/reports`. Then remove or fix its /etc/fstab line (`_netdev,nofail`, or `x-systemd.automount`)."],
+      lesson: "Load counts processes in D state. When the CPU is idle and wa is low, look for a hung network mount: umount -f -l releases them; nothing kills them while the server is gone.",
+      tries: ["top", "ps -eo pid,stat,cmd"]
+    },
+    {
+      id: "memleak", title: "A slow memory leak", level: "14",
+      story: "The queue worker's memory climbs every hour until the box swaps or the OOM killer acts at night. Restarting it each morning has become a ritual.",
+      goal: "Find the leaking process and make the system protect itself until the bug is fixed.",
+      done: "The worker is capped by MemoryMax= and restarts itself when it leaks.",
+      setup(h) {
+        h.bin("/opt/worker/bin/worker");
+        unit(h, "queue-worker.service", svcText({ desc: "Queue worker", service: "User=app\nExecStart=/opt/worker/bin/worker --queue orders\nRestart=always\nRestartSec=5" }));
+        const cap = (x) => { const m = L.parseSize(String(x.cfg.one("Service", "MemoryMax") || "").replace(/([KMG])$/i, "$1")); return m ? Math.round(m / 1024) : null; };
+        h.apps["/opt/worker/bin/worker"] = (hh, x) => ({ ident: "worker", proc: { rss: 310 * 1024, cpu: 4, leak: true, cap: cap(x),
+          onProperty: (h2, props, p) => { for (const pr of props) if (/^MemoryMax=/.test(pr)) p.cap = cap({ cfg: { one: () => pr.split("=")[1] } }); } }, log: ["worker ready, queue=orders"] });
+        // The worker leaks about 2 MB a second; a cgroup limit kills and restarts it.
+        h.everyTick = (hh, sec) => {
+          const p = mainProc(hh, "queue-worker.service");
+          if (!p) return;
+          p.rss += 2048 * sec;
+          if (p.cap && p.rss >= p.cap) {
+            hh.log("systemd", "queue-worker.service: A process of this unit has been killed by the OOM killer.", { pid: 1, unit: "queue-worker.service", prio: 4 });
+            p.oomKilled = true;
+            L.die(hh, p, "killed", "KILL");
+          }
+        };
+      },
+      after(h) { mainProc(h, "queue-worker.service").rss = 2.4 * 1024 * 1024; },
+      won: (h) => { const p = mainProc(h, "queue-worker.service"); return Boolean(p && p.cap && p.cap <= 2 * 1024 * 1024 && p.rss < p.cap); },
+      check(h) { const p = mainProc(h, "queue-worker.service"); return { label: "queue-worker", ok: this.won(h), text: !p ? "not running" : `${(p.rss / 1048576).toFixed(2)}G, +120 MB/min${p.cap ? `, capped at ${(p.cap / 1048576).toFixed(1)}G` : ", no limit"}` }; },
+      hints: ["Who is big? `ps aux --sort=-rss | head -3`. Is it growing? `ps -o pid,rss,etime,cmd -p $(pgrep worker)`, `sleep 60`, run it again.", "A restart only resets the clock; it will leak again. Until the bug is fixed, let the kernel and systemd contain it: a memory limit, and Restart=always to bring it back.", "`sudo systemctl set-property queue-worker MemoryMax=1G`, then `sudo systemctl restart queue-worker`. Report the leak with the numbers you collected."],
+      lesson: "Confirm a leak with RSS over time (ps, smem), then contain it with MemoryMax= and Restart= while the code is fixed. Dropping caches or adding swap only hides it.",
+      tries: ["ps aux --sort=-rss | head -3", "free -h"]
+    },
+    {
+      id: "swapfile", title: "No swap, and memory is tight", level: "14",
+      story: "This 4 GB server has no swap. A nightly analytics job pushes memory to the edge and the OOM killer has started picking off services.",
+      goal: "Add a 2 GB swap file that is active now and after every reboot.",
+      done: "/swapfile is active, private and in /etc/fstab.",
+      after(h) { L.spawn(h, { pid: 3901, user: "app", comm: "analytics", args: "/opt/analytics/bin/analytics --nightly", rss: 2.9 * 1024 * 1024, cpu: 35, start: ago(h, 40 * MIN) }); },
+      won: (h) => { const n = h.fs.get("/swapfile"); return Boolean(n) && (n.m & 0o777) === 0o600 && (h.swaps || []).some((s) => s.path === "/swapfile") && L.fstab(h).some((e) => e.spec === "/swapfile" && e.type === "swap"); },
+      check(h) {
+        const n = h.fs.get("/swapfile");
+        const on = (h.swaps || []).some((s) => s.path === "/swapfile");
+        const inTab = L.fstab(h).some((e) => e.spec === "/swapfile" && e.type === "swap");
+        return { label: "swap", ok: this.won(h), text: !n ? "none" : !on ? "file exists, not active" : (n.m & 0o777) !== 0o600 ? "active, but the file is readable by others" : !inTab ? "active until the next reboot" : "2.0G, persistent" };
+      },
+      hints: ["`free -h` and `swapon --show`: no swap at all.", "A swap file needs four steps: allocate, chmod 600 (it holds memory contents), mkswap, swapon. And a line in /etc/fstab, or it is gone after a reboot.", "`sudo fallocate -l 2G /swapfile`, `sudo chmod 600 /swapfile`, `sudo mkswap /swapfile`, `sudo swapon /swapfile`, `echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab`."],
+      lesson: "Swap gives the kernel room before the OOM killer acts. Make the file 600, mkswap it, swapon, and add it to fstab. Swap is a buffer, not a fix for a workload that does not fit.",
+      tries: ["free -h", "cat /proc/swaps"]
+    },
+
+    // --- Rocky Linux / RHEL ---------------------------------------------------------------
+    {
+      id: "dnfepel", title: "dnf: Unable to find a match", level: "16", distro: "rhel", user: "rocky",
+      story: "A runbook says to run htop on this Rocky Linux 9 server. dnf says the package does not exist.",
+      goal: "Install htop the supported way.",
+      done: "htop is installed from EPEL.",
+      won: (h) => Boolean(h.pkgs.installed.htop),
+      check(h) { return { label: "rpm -q htop", ok: this.won(h), text: h.pkgs.installed.htop ? `htop-${h.pkgs.installed.htop}` : "package htop is not installed" }; },
+      hints: ["`sudo dnf install htop`, then `dnf repolist`.", "RHEL-family repositories (BaseOS, AppStream) are deliberately small. Many tools live in EPEL, Extra Packages for Enterprise Linux, which you enable by installing a package from Extras.", "`sudo dnf install -y epel-release`, then `sudo dnf install -y htop`."],
+      lesson: "\"Unable to find a match\" on RHEL often means the package is in EPEL. dnf install epel-release enables it; dnf repolist shows what is enabled.",
+      tries: ["sudo dnf install htop", "dnf repolist"]
+    },
+    {
+      id: "selinux", title: "403 with correct permissions: SELinux", level: "16", distro: "rhel", user: "rocky",
+      story: "The shop's files were built in your home folder and moved to /srv/shop. Permissions look perfect, yet nginx returns 403 Forbidden.",
+      goal: "Serve /srv/shop with SELinux enforcing, in a way that survives a relabel.",
+      done: "/srv/shop is labelled httpd_sys_content_t by policy.",
+      setup(h) {
+        rhelNginx(h, "server {\n    listen 80;\n    server_name _;\n    root /srv/shop;\n}\n");
+        h.dir("/srv/shop", { ctx: "user_home_t" });
+        h.file("/srv/shop/index.html", "<!doctype html>\n<title>Shop</title>\n<p>Rocky shop</p>\n", { ctx: "user_home_t" });
+      },
+      after(h) { L.http(h, "http://localhost/"); L.http(h, "http://localhost/"); },
+      won: (h) => h.selinux === "enforcing" && httpCode(h, "http://localhost/") === 200 && h.fcontext.some(([re, t]) => t === "httpd_sys_content_t" && new RegExp(`^${re}$`).test("/srv/shop/index.html")),
+      check(h) {
+        const c = httpCode(h, "http://localhost/");
+        return { label: "http://localhost/", ok: this.won(h), text: h.selinux !== "enforcing" ? `${c}, with SELinux turned off` : c !== 200 ? `${c} Forbidden` : !h.fcontext.length ? "200 until the next relabel" : "200" };
+      },
+      hints: ["`curl -I localhost`, `ls -l /srv/shop` (fine), then `ls -Z /srv/shop`.", "The files kept user_home_t from your home folder. `sudo ausearch -m avc -ts recent` shows nginx (httpd_t) denied. setenforce 0 and chcon only hide it; a relabel puts the wrong label back.", "Tell the policy what /srv/shop is, then apply it: `sudo semanage fcontext -a -t httpd_sys_content_t '/srv/shop(/.*)?'` and `sudo restorecon -Rv /srv/shop`."],
+      lesson: "On SELinux systems, mv keeps a file's label and cp takes the new folder's. semanage fcontext plus restorecon fixes it for good; setenforce 0 just switches the protection off.",
+      tries: ["curl -I localhost", "ls -Z /srv/shop"]
+    },
+    {
+      id: "selinuxport", title: "bind() failed (13: Permission denied)", level: "16", distro: "rhel", user: "rocky",
+      story: "The load balancer expects the app's nginx on port 8090. nginx refuses to start: permission denied, although it runs as root.",
+      goal: "Run nginx on port 8090 with SELinux enforcing.",
+      done: "nginx listens on 8090 and SELinux allows it.",
+      setup(h) { rhelNginx(h, "server {\n    listen 8090;\n    server_name _;\n    root /usr/share/nginx/html;\n}\n"); },
+      won: (h) => h.selinux === "enforcing" && active(h, "nginx.service") && (mainProc(h, "nginx.service") || { listen: [] }).listen.some((l) => l.port === 8090),
+      check(h) { return { label: "nginx on :8090", ok: this.won(h), text: !active(h, "nginx.service") ? "not running" : h.selinux !== "enforcing" ? "running with SELinux off" : "running" }; },
+      hints: ["`journalctl -u nginx -n 5`: bind() ... failed (13: Permission denied). Root, yet denied: look at SELinux, `sudo ausearch -m avc -ts recent`.", "nginx (httpd_t) may only bind ports labelled http_port_t. `sudo semanage port -l | grep http_port_t` lists them; 8090 is not there.", "`sudo semanage port -a -t http_port_t -p tcp 8090`, then `sudo systemctl start nginx`."],
+      lesson: "SELinux labels ports too. Add a port to the service's type with semanage port -a instead of disabling SELinux.",
+      tries: ["sudo systemctl status nginx", "sudo semanage port -l"]
+    },
+    {
+      id: "firewalld", title: "firewalld blocks the new port", level: "16", distro: "rhel", user: "rocky",
+      story: "The storefront answers curl localhost:8080 on app-01, but the load balancer times out. It worked in the Ubuntu staging environment.",
+      goal: "Let traffic reach port 8080 now and after reloads and reboots, with firewalld running.",
+      done: "8080/tcp is open in the runtime and permanent firewalld config.",
+      setup(h) {
+        h.bin("/opt/storefront/bin/storefront");
+        unit(h, "storefront.service", svcText({ desc: "Storefront", service: "User=app\nExecStart=/opt/storefront/bin/storefront --listen 0.0.0.0:8080" }));
+        h.apps["/opt/storefront/bin/storefront"] = service({ ident: "storefront", port: 8080, rss: 99000 });
+      },
+      won: (h) => active(h, "firewalld.service") && h.fwd.runtime.ports.includes(8080) && h.fwd.permanent.ports.includes(8080),
+      check(h) {
+        const up = active(h, "firewalld.service");
+        return { label: "lb-01 → app-01:8080", ok: this.won(h), text: !up ? "open, but firewalld is stopped" : !h.fwd.runtime.ports.includes(8080) ? "timed out (dropped)" : !h.fwd.permanent.ports.includes(8080) ? "open until the next reload" : "allowed" };
+      },
+      hints: ["`sudo firewall-cmd --list-all`: services ssh, cockpit and dhcpv6-client; no 8080.", "firewalld has two configurations: runtime (now) and permanent (after --reload or a reboot). A rule in only one of them is half a fix.", "`sudo firewall-cmd --permanent --add-port=8080/tcp`, then `sudo firewall-cmd --reload`, and `sudo firewall-cmd --list-ports`."],
+      lesson: "On RHEL the firewall is firewalld, not ufw. Add rules with --permanent and --reload (or both runtime and permanent); stopping firewalld is not a fix.",
+      tries: ["curl -s localhost:8080", "sudo firewall-cmd --list-all"]
+    },
+    {
+      id: "lvm", title: "Grow / on LVM and XFS", level: "16", distro: "rhel", user: "rocky",
+      story: "/ is at 97% on app-01. The volume group still has 29 GB free from when the disk was provisioned.",
+      goal: "Give / 20 GB more, online.",
+      done: "The logical volume and its XFS file system are 40 GB.",
+      setup(h) { h.mounts[0].base = 18.6 * GiB; },
+      won: (h) => h.mounts[0].size >= 35 * GiB,
+      check(h) { const lv = h.lvm.lvs[0]; return { label: "/ size", ok: this.won(h), text: `${L.human(h.mounts[0].size)} file system on a ${L.human(lv.size)} volume, ${Math.ceil(Math.min(1, rootUse(h)) * 100)}% used` }; },
+      hints: ["`df -hT /` (xfs on /dev/mapper/rl-root), `sudo lvs` and `sudo vgs` (VFree).", "Two layers here: the logical volume, then the file system. XFS grows with xfs_growfs, not resize2fs.", "`sudo lvextend -r -L +20G /dev/rl/root` grows both in one step (-r resizes the file system). Without -r, follow with `sudo xfs_growfs /`."],
+      lesson: "On LVM, lvextend grows the volume and -r grows the file system with it. XFS can grow online but never shrink; ext4 uses resize2fs.",
+      tries: ["df -hT /", "sudo vgs"]
     }
   ];
 
@@ -1080,12 +1388,13 @@
   const GROUPS = [
     ["Files and permissions", ["noexec", "rootowned", "umask", "immutable", "crlf", "symlink"]],
     ["Processes", ["runaway", "graceful", "zombie", "stalepid"]],
-    ["Services", ["notenabled", "masked", "badexec", "daemonreload", "port", "restartlimit", "bootorder", "cronpath", "cronuser"]],
-    ["Disks", ["deletedopen", "runawaylog", "inodes", "growfs", "readonly"]],
+    ["Services", ["notenabled", "masked", "badexec", "daemonreload", "envmissing", "port", "restartlimit", "bootorder", "cronpath", "cronuser"]],
+    ["Disks", ["deletedopen", "runawaylog", "logrotate", "journalfull", "inodes", "growfs", "readonly", "nfsstale"]],
     ["Networking", ["dns", "hosts", "route", "firewall", "listenlocal", "hostname"]],
-    ["Users and security", ["groups", "sshkey", "sshauth", "sudoers", "sudocmd", "secretperm", "exposedport"]],
+    ["Users and security", ["groups", "sshkey", "sshauth", "sudoers", "sudocmd", "secretperm", "exposedport", "bruteforce", "certexpired"]],
     ["Boot and kernel", ["fstab", "ipforward", "time", "rebootrequired", "dpkglock"]],
-    ["Performance", ["iowait", "swap", "oom", "ulimit"]]
+    ["Performance", ["iowait", "nfshang", "swap", "swapfile", "memleak", "oom", "ulimit"]],
+    ["Rocky Linux and RHEL", ["dnfepel", "firewalld", "selinux", "selinuxport", "lvm"]]
   ];
   const ORDER = GROUPS.flatMap(([, ids]) => ids);
   SCENARIOS.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));

@@ -39,6 +39,7 @@
     const s = host.sess;
     const home = (host.user(s.user) || {}).home;
     const where = s.cwd === home ? "~" : home && s.cwd.startsWith(home + "/") ? "~" + s.cwd.slice(home.length) : s.cwd;
+    if (host.distro === "rhel") return `[${s.user}@${host.hostname} ${where === "~" ? "~" : L.basename(s.cwd)}]${s.user === "root" ? "#" : "$"}`;
     return `${s.user}@${host.hostname}:${where}${s.user === "root" ? "#" : "$"}`;
   }
 
@@ -61,7 +62,7 @@
     const c = scenario.check(host);
     const bar = (frac, cls) => { const i = h("i." + cls); i.style.width = Math.round(Math.min(1, frac) * 100) + "%"; return h("span.pg-meter", { "aria-hidden": "true" }, i); };
     const rows = [h("div.pg-check." + (c.ok ? "ok" : "bad"), null, h("span.pg-dot", { "aria-hidden": "true" }, c.ok ? "✓" : "!"), h("span.pg-check-label", null, c.label), h("span.pg-check-text", null, c.text))];
-    const units = Object.keys(host.units).filter((n) => !/timesyncd/.test(n) || scenario.id === "time").sort();
+    const units = Object.keys(host.units).filter((n) => !/^systemd-|^chronyd/.test(n) || scenario.id === "time").sort();
     rows.push(h("div.pg-node", null, h("div.pg-node-name", null, "Services"), units.map((n) => {
       const st = L.state(host, n).active;
       const cls = st === "active" ? "ok" : st === "failed" ? "bad" : "off";
@@ -108,6 +109,7 @@
     goal.textContent = "Goal: " + scenario.goal;
     goal.className = "pg-goal";
     promptEl.textContent = prompt();
+    $("pg-host").textContent = `ssh ${host.hostname}`;
     renderPicker();
     renderTries();
     renderMap();

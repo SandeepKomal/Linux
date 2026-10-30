@@ -8,9 +8,12 @@
   const { GiB, MiB } = L;
 
   // Where each simulated command lives, as on Ubuntu 24.04.
-  const SBIN = ["useradd", "usermod", "userdel", "groupadd", "visudo", "ufw", "iptables", "fsck", "e2fsck", "fsck.ext4", "resize2fs", "swapon", "swapoff",
+  const SBIN = ["sshd", "logrotate", "mkswap", "useradd", "usermod", "userdel", "groupadd", "visudo", "ufw", "iptables", "fsck", "e2fsck", "fsck.ext4", "resize2fs", "swapon", "swapoff",
     "sysctl", "reboot", "shutdown", "ip", "blkid", "iotop", "nginx"];
-  const NOT_BINARIES = ["sudo", "dos2unix", "nginx"];
+  const NOT_BINARIES = ["sudo", "dos2unix", "nginx", "fail2ban-client", "certbot", "smem"];
+  // Commands only one family ships by default.
+  const ONLY = { rhel: ["dnf", "yum", "rpm", "firewall-cmd", "getenforce", "setenforce", "sestatus", "restorecon", "semanage", "chcon", "ausearch", "lvs", "vgs", "pvs", "lvextend", "xfs_growfs"],
+    ubuntu: ["apt", "apt-get", "apt-cache", "dpkg", "ufw"] };
 
   const PASSWD = ["root:x:0:0:root:/root:/bin/bash", "daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin", "bin:x:2:2:bin:/bin:/usr/sbin/nologin",
     "www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin", "nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin",
@@ -24,6 +27,7 @@
     "ssh.service": "[Unit]\nDescription=OpenBSD Secure Shell server\nDocumentation=man:sshd(8) man:sshd_config(5)\nAfter=network.target auditd.service\n\n[Service]\nExecStartPre=/usr/sbin/sshd -t\nExecStart=/usr/sbin/sshd -D $SSHD_OPTS\nRestart=on-failure\nType=notify\n\n[Install]\nWantedBy=multi-user.target\n",
     "cron.service": "[Unit]\nDescription=Regular background program processing daemon\nDocumentation=man:cron(8)\nAfter=remote-fs.target nss-user-lookup.target\n\n[Service]\nExecStart=/usr/sbin/cron -f -P\nKillMode=process\nRestart=on-failure\n\n[Install]\nWantedBy=multi-user.target\n",
     "systemd-timesyncd.service": "[Unit]\nDescription=Network Time Synchronization\nDocumentation=man:systemd-timesyncd.service(8)\n\n[Service]\nType=notify\nExecStart=/usr/lib/systemd/systemd-timesyncd\nUser=systemd-timesync\nRestart=always\n\n[Install]\nWantedBy=sysinit.target multi-user.target\n",
+    "systemd-journald.service": "[Unit]\nDescription=Journal Service\nDocumentation=man:systemd-journald.service(8) man:journald.conf(5)\nDefaultDependencies=no\n\n[Service]\nType=notify\nExecStart=/usr/lib/systemd/systemd-journald\nRestart=always\nRestartSec=0\n",
     "nginx.service": "[Unit]\nDescription=A high performance web server and a reverse proxy server\nDocumentation=man:nginx(8)\nAfter=network-online.target remote-fs.target nss-lookup.target\nWants=network-online.target\n\n[Service]\nType=forking\nPIDFile=/run/nginx.pid\nExecStartPre=/usr/sbin/nginx -t -q -g 'daemon on; master_process on;'\nExecStart=/usr/sbin/nginx -g 'daemon on; master_process on;'\nExecReload=/usr/sbin/nginx -g 'daemon on; master_process on;' -s reload\nTimeoutStopSec=5\nKillMode=mixed\n\n[Install]\nWantedBy=multi-user.target\n",
     "postgresql.service": "[Unit]\nDescription=PostgreSQL RDBMS\nAfter=network.target\n\n[Service]\nType=notify\nUser=postgres\nExecStart=/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/16/main -c config_file=/etc/postgresql/16/main/postgresql.conf\nExecReload=/bin/kill -HUP $MAINPID\n\n[Install]\nWantedBy=multi-user.target\n"
   };
@@ -46,27 +50,34 @@
 
   // nginx serves files as www-data from the root in its site file.
   function nginxConf(h) {
-    const conf = h.kids("/etc/nginx/sites-enabled").map((k) => h.read(`/etc/nginx/sites-enabled/${k}`) || "").join("\n");
-    return { port: Number((/listen\s+(\d+)/.exec(conf) || [, 80])[1]), root: (/root\s+([^;]+);/.exec(conf) || [, "/var/www/html"])[1] };
+    const conf = ["/etc/nginx/sites-enabled", "/etc/nginx/conf.d"].flatMap((d) => h.kids(d).map((k) => h.read(`${d}/${k}`) || "")).join("\n") + (h.read("/etc/nginx/nginx.conf") || "");
+    const ports = [...new Set([...conf.matchAll(/listen\s+(\d+)/g)].map((m) => Number(m[1])))];
+    return { port: ports[0] || 80, ports: ports.length ? ports : [80], root: (/root\s+([^;]+);/.exec(conf) || [, "/var/www/html"])[1], cert: (/ssl_certificate\s+([^;]+);/.exec(conf) || [])[1] };
   }
   const page = (code, text) => ({ code, body: ["<html>", `<head><title>${code} ${text}</title></head>`, "<body>", `<center><h1>${code} ${text}</h1></center>`, "<hr><center>nginx/1.24.0 (Ubuntu)</center>", "</body>", "</html>"] });
   function nginxHttp(h, path) {
     const conf = nginxConf(h);
     const want = L.norm(path.split("?")[0], "/");
-    let r = h.lookup(L.norm("." + want, conf.root), "www-data");
-    if (r.node && r.node.t === "d") r = h.lookup(L.norm("index.html", r.path), "www-data");
+    let r = h.lookup(L.norm("." + want, conf.root), h.webUser);
+    if (r.node && r.node.t === "d") r = h.lookup(L.norm("index.html", r.path), h.webUser);
     if (r.err === "EACCES") return page(403, "Forbidden");
     if (r.err) return page(404, "Not Found");
-    if (!h.can("www-data", r.node, 4)) return page(403, "Forbidden");
+    if (!h.can(h.webUser, r.node, 4)) return page(403, "Forbidden");
+    if (L.selinuxDenies && L.selinuxDenies(h, r.path, "read")) return page(403, "Forbidden");
     return { code: 200, body: r.node.gen ? r.node.gen(h) : L.lines(r.node.data || "") };
   }
   const nginx = (h) => {
     const conf = nginxConf(h);
+    if (L.selinuxDenies && L.selinuxDenies(h, conf.port, "name_bind")) {
+      return { ident: "nginx", fail: { code: 1, log: [`nginx: [emerg] bind() to 0.0.0.0:${conf.port} failed (13: Permission denied)`] } };
+    }
     if (portBusy(h, conf.port, "0.0.0.0")) {
       return { ident: "nginx", fail: { code: 1, log: [...Array(5).fill(`nginx: [emerg] bind() to 0.0.0.0:${conf.port} failed (98: Address already in use)`), "nginx: [emerg] still could not bind()"] } };
     }
-    return { ident: "nginx", proc: { comm: "nginx", args: "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;", rss: 6200, lead: true, listen: [{ addr: "0.0.0.0", port: conf.port, fd: 6 }], http: nginxHttp, onReload: () => null },
-      kids: [{ comm: "nginx", args: "nginx: worker process", user: "www-data", rss: 5100 }, { comm: "nginx", args: "nginx: worker process", user: "www-data", rss: 5100 }] };
+    const cert = () => conf.cert && L.certOf(h, conf.cert) ? { ...L.certOf(h, conf.cert) } : null;
+    return { ident: "nginx", proc: { comm: "nginx", args: "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;", rss: 6200, lead: true, listen: conf.ports.map((port, i) => ({ addr: "0.0.0.0", port, fd: 6 + i })), http: nginxHttp,
+      cert: cert(), onReload: (hh, p) => { p.cert = conf.cert && L.certOf(hh, conf.cert) ? { ...L.certOf(hh, conf.cert) } : null; return null; } },
+      kids: [{ comm: "nginx", args: "nginx: worker process", user: h.webUser, rss: 5100 }, { comm: "nginx", args: "nginx: worker process", user: h.webUser, rss: 5100 }] };
   };
 
   // nginx -t checks the configuration; -s reload asks the master to reread it.
@@ -84,11 +95,12 @@
   };
 
   function world(h) {
+    Object.assign(h, { distro: "ubuntu", defaultUser: "ubuntu", webUser: "www-data", cronUnit: "cron.service" });
     h.hostname = "web-01";
     h.kernel = "6.8.0-1015-aws";
     h.cpus = 2;
     h.mem = { total: 4005748, kernel: 330 * 1024, cache: 1300 * 1024, swap: 0, swapBase: 0 };
-    h.sysctlDefaults = { "net.ipv4.ip_forward": "0", "vm.swappiness": "60", "fs.file-max": "9223372036854775807", "kernel.dmesg_restrict": "1", "net.core.somaxconn": "4096", "vm.overcommit_memory": "0", "net.ipv4.conf.default.rp_filter": "2", "net.ipv4.conf.all.rp_filter": "2" };
+    h.sysctlDefaults = { "net.ipv4.ip_forward": "0", "vm.swappiness": "60", "fs.file-max": "9223372036854775807", "kernel.dmesg_restrict": "1", "net.core.somaxconn": "4096", "vm.overcommit_memory": "0", "net.ipv4.conf.default.rp_filter": "2", "net.ipv4.conf.all.rp_filter": "2", "vm.drop_caches": "0" };
     h.sysctl = { ...h.sysctlDefaults };
     h.net = {
       ifaces: [{ name: "lo", ip: "127.0.0.1/8", mtu: 65536, up: true }, { name: "eth0", ip: "10.0.1.10/24", mtu: 9001, mac: "0a:4f:3c:91:7e:21", up: true }],
@@ -134,8 +146,9 @@
       }
     };
 
+    const distro = h.scenario.distro || "ubuntu";
     for (const [name] of Object.entries(L.CMDS)) {
-      if (!L.CMDS[name] || NOT_BINARIES.includes(name)) continue;
+      if (!L.CMDS[name] || NOT_BINARIES.includes(name) || Object.entries(ONLY).some(([d, list]) => d !== distro && list.includes(name))) continue;
       h.bin(`${SBIN.includes(name) ? "/usr/sbin" : "/usr/bin"}/${name}`);
     }
     h.bin("/usr/bin/sudo", { m: 0o4755 });
@@ -196,10 +209,26 @@
     h.dir("/run/postgresql", { u: "postgres", g: "postgres", m: 0o2775 });
     h.dir("/srv/app", { u: "app", g: "app" });
     for (const [n, t] of Object.entries(UNITS)) h.file(`/usr/lib/systemd/system/${n}`, t);
-    for (const n of ["ssh.service", "cron.service", "systemd-timesyncd.service"]) h.link(`/etc/systemd/system/multi-user.target.wants/${n}`, `/usr/lib/systemd/system/${n}`);
+    for (const n of ["systemd-journald.service", "ssh.service", "cron.service", "systemd-timesyncd.service"]) h.link(`/etc/systemd/system/multi-user.target.wants/${n}`, `/usr/lib/systemd/system/${n}`);
 
-    h.apps["/usr/sbin/sshd"] = service({ ident: "sshd", port: 22, rss: 7800, cpu: 0.01, proc: () => ({ comm: "sshd", args: "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups", lead: true }), log: () => ["Server listening on 0.0.0.0 port 22.", "Server listening on :: port 22."] });
+    h.apps["/usr/sbin/sshd"] = service({ ident: "sshd", port: 22, rss: 7800, cpu: 0.01,
+      proc: (hh) => ({ comm: "sshd", args: "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups", lead: true, sshd: L.sshdConfig(hh), onReload: (h2, p) => { p.sshd = L.sshdConfig(h2); return null; } }), log: () => ["Server listening on 0.0.0.0 port 22.", "Server listening on :: port 22."] });
     h.apps["/usr/sbin/cron"] = () => ({ ident: "cron", proc: { comm: "cron", args: "/usr/sbin/cron -f -P", rss: 2700, lead: true }, log: ["(CRON) INFO (pidfile fd = 3)", "(CRON) INFO (Running @reboot jobs)"] });
+    // journald keeps its active file open and trims archived files to SystemMaxUse= when it starts.
+    h.bin("/usr/lib/systemd/systemd-journald");
+    const J = "/var/log/journal/ec2a1f3e9c6b4d0f8e21a7c35d90b1f4";
+    h.dir(J, { g: "systemd-journal", m: 0o2755 });
+    h.file(`${J}/system.journal`, "", { g: "systemd-journal", m: 0o640, size: 64 * MiB });
+    h.file(`${J}/system@b1f0c2d4e6a84f20-0006243a1c9e2b11.journal`, "", { g: "systemd-journal", m: 0o640, size: 128 * MiB, mt: h.clock - 9 * 86400000 });
+    h.file(`${J}/user-1000@4a2e7c90d1b34f58-00062441f0b7a3c2.journal`, "", { g: "systemd-journal", m: 0o640, size: 120 * MiB, mt: h.clock - 5 * 86400000 });
+    h.apps["/usr/lib/systemd/systemd-journald"] = (hh) => {
+      const max = L.journal.maxUse(hh);
+      const log = ["Journal started", `System Journal (${J}) is ${L.human(L.journal.bytes(hh))}B, max ${max ? L.human(max) + "B" : "4.0G"}, ${L.human(Math.max(0, (max || 4 * GiB) - L.journal.bytes(hh)))}B free.`.replace(/([KMG])BB/g, "$1B")];
+      if (max) L.journal.vacuum(hh, max);
+      return { ident: "systemd-journald", proc: { pid: hh.booting && !L.procOf(hh, 412) ? 412 : undefined, comm: "systemd-journal", args: "/usr/lib/systemd/systemd-journald", rss: 21400, fds: [{ fd: 23, path: `${J}/system.journal`, mode: "u" }] }, log };
+    };
+    h.file("/etc/ssh/sshd_config", "# This is the sshd server system-wide configuration file.\nInclude /etc/ssh/sshd_config.d/*.conf\n\n#PermitRootLogin prohibit-password\n#PasswordAuthentication yes\nKbdInteractiveAuthentication no\nUsePAM yes\nX11Forwarding yes\nPrintMotd no\nAcceptEnv LANG LC_*\nSubsystem\tsftp\t/usr/lib/openssh/sftp-server\n");
+    h.file("/etc/ssh/sshd_config.d/60-cloudimg-settings.conf", "PasswordAuthentication no\n");
     h.apps["/usr/lib/systemd/systemd-timesyncd"] = (hh) => {
       const log = [];
       if (hh.clockSkew) {
@@ -224,17 +253,17 @@
       for (const e of errs.length ? errs : [{ msg: `(${tag}) RELOAD (${path.startsWith("/etc/") ? path : "crontabs/" + L.basename(path)})` }]) hh.log("cron", e.msg, { pid: 612, unit: "cron.service", prio: errs.length ? 3 : 6 });
     };
     world.system(h);
+    if (distro === "rhel") L.rhel(h);
   }
 
   // What runs on every boot before the services: init, the journal, udev, your login.
   world.system = (h) => {
     h.nextPid = 1;
     L.spawn(h, { pid: 1, ppid: 0, comm: "systemd", args: "/sbin/init", rss: 12900, vsz: 167744, lead: true, start: h.boot });
-    L.spawn(h, { pid: 412, comm: "systemd-journal", args: "/usr/lib/systemd/systemd-journald", rss: 21400, start: h.boot });
     L.spawn(h, { pid: 455, comm: "systemd-udevd", args: "/usr/lib/systemd/systemd-udevd", rss: 7300, start: h.boot });
     L.spawn(h, { pid: 598, comm: "systemd-network", args: "/usr/lib/systemd/systemd-networkd", user: "systemd-network", rss: 8600, start: h.boot });
     h.nextPid = 700;
-    const who = h.scenario.user || "ubuntu";
+    const who = h.scenario.user || h.defaultUser;
     L.spawn(h, { pid: 1402, comm: "sshd", args: `sshd: ${who} [priv]`, rss: 11000, start: h.clock - 600000 });
     L.spawn(h, { pid: 1450, ppid: 1402, user: who, comm: "bash", args: "-bash", tty: "pts/0", rss: 5300, start: h.clock - 600000 });
     h.nextPid = 900;

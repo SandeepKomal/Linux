@@ -36,7 +36,9 @@
   const ERR = {
     ENOENT: "No such file or directory", EACCES: "Permission denied", ENOTDIR: "Not a directory", EISDIR: "Is a directory",
     EROFS: "Read-only file system", ENOSPC: "No space left on device", EPERM: "Operation not permitted", ELOOP: "Too many levels of symbolic links",
-    EEXIST: "File exists", ENOTEMPTY: "Directory not empty", EBUSY: "Device or resource busy", E2BIG: "Argument list too long"
+    EEXIST: "File exists", ENOTEMPTY: "Directory not empty", EBUSY: "Device or resource busy", E2BIG: "Argument list too long", ESTALE: "Stale file handle",
+    // A hard NFS mount whose server is gone never answers; shell() reports the hang.
+    EHUNG: "\u0000hung"
   };
 
   function norm(p, cwd) {
@@ -114,7 +116,7 @@
       if (scenario.setup) scenario.setup(this);
       root.LQSim.bootUp(this, true);
       if (scenario.after) scenario.after(this);
-      this.sess = this.newSession(scenario.user || "ubuntu");
+      this.sess = this.newSession(scenario.user || this.defaultUser);
     }
 
     newSession(user) {
@@ -124,6 +126,10 @@
           : "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
         HOME: u.home, USER: user, LOGNAME: user, SHELL: u.shell, LANG: "C.UTF-8", TERM: "xterm-256color", PWD: u.home
       };
+      // A login shell also picks up the exports in the user's startup files.
+      for (const f of [`${u.home}/.profile`, `${u.home}/.bashrc`, `${u.home}/.bash_profile`]) {
+        for (const m of (this.read(f) || "").matchAll(/^\s*export\s+([A-Za-z_]\w*)=["']?([^"'\n]*)["']?\s*$/gm)) env[m[1]] = m[2];
+      }
       return { user, cwd: u.home, env, umask: this.profileUmask(user), nofile: 1024, outer: null, groups: this.groupsOf(user) };
     }
     // A login shell reads the umask from the user's profile, or 002 (022 for root).
@@ -172,6 +178,8 @@
     // symlinks followed (the last one only when follow is true).
     lookup(path, user, follow = true, depth = 0) {
       if (path.startsWith("/proc/") || path === "/proc") return root.LQSim.procfs(this, path, user);
+      const nfs = this.hasNfs && this.mountOf(path);
+      if (nfs && nfs.nfs && (nfs.stale || nfs.hung)) { if (nfs.hung) this.hungHit = nfs; return { err: nfs.stale ? "ESTALE" : "EHUNG" }; }
       const parts = path.split("/").filter(Boolean);
       let cur = "";
       for (let i = 0; i < parts.length; i++) {
@@ -461,6 +469,11 @@
     h.history.push(line);
     runLine(h, line, term, ctxOf(h));
     h.tick(1);
+    if (h.hungHit) {
+      const m = h.hungHit;
+      h.hungHit = null;
+      term.splice(0, term.length, ["^C", ""], [`(the command hung in state D, waiting for ${m.server} to answer for ${m.mnt}; the playground interrupted it. On a hard NFS mount Ctrl+C often does not work)`, "dim"]);
+    }
     if (h.rebooting) {
       h.rebooting = false;
       term.push([`Connection to ${h.hostname} closed by remote host.`, ""]);
@@ -605,8 +618,9 @@
     if (!w) {
       const known = root.LQSim.notInstalled && root.LQSim.notInstalled(name);
       if (known && !c.script) return fail(known, 127);
-      if (c.cron) return fail(`/bin/sh: 1: ${name}: not found`, 127);
-      return fail(c.script ? `${where}${name}: command not found` : `${name}: command not found`, 127);
+      if (c.cron) return fail(c.h.distro === "rhel" ? `/bin/sh: line 1: ${name}: command not found` : `/bin/sh: 1: ${name}: not found`, 127);
+      // Ubuntu's command-not-found handler drops the "-bash: " prefix; RHEL keeps it.
+      return fail(c.script || c.h.distro === "rhel" ? `${where}${name}: command not found` : `${name}: command not found`, 127);
     }
     return runFile(cc, w.path, w.node, args, stdin);
   }
@@ -704,11 +718,14 @@
     const fmtSize = (n) => (f.h ? human(n) : String(n));
     const render = (entries, dirPath) => {
       // One name per line into a pipe or file, as GNU ls does; columns on the terminal.
-      if (!long) return !entries.length ? [] : c.piped || f["1"] ? entries.map((e) => e.name) : [entries.map((e) => e.name).join("  ")];
+      const shown = (e) => (f.Z && h.distro === "rhel" ? `unconfined_u:object_r:${root.LQSim.rhelLabel(h, e.path)}:s0 ${e.name}` : e.name);
+      if (!long) return !entries.length ? [] : c.piped || f["1"] || f.Z ? entries.map(shown) : [entries.map(shown).join("  ")];
       const rows = entries.map((e) => {
         const r = lsLong(c, e.path, e.node, e.name);
         if (f.n) { r.u = String((h.user(r.u) || { uid: r.u }).uid); r.g = String((h.groups().find((g) => g.name === r.g) || { gid: r.g }).gid); }
         r.size = fmtSize(r.size);
+        // On SELinux systems ls marks labelled files with a dot; -Z shows the label.
+        if (h.distro === "rhel") { r.mode = r.mode.replace(/\+?$/, "."); if (f.Z) r.g += " " + `unconfined_u:object_r:${root.LQSim.rhelLabel(h, e.path)}:s0`; }
         return r;
       });
       const total = entries.reduce((s, e) => s + (e.node.t === "f" ? Math.ceil(h.sizeOf(e.node) / 4096) * 4 : e.node.t === "d" ? 4 : 0), 0);
@@ -1052,6 +1069,8 @@
           if (e) { err.push(`mv: cannot move '${t}' to '${destArg}': ${ERR[e]}`); continue; }
           for (const k of [sr.path, ...h.walk(sr.path)]) {
             const n = h.fs.get(k);
+            // mv keeps the SELinux label a file had where it was created.
+            if (h.distro === "rhel" && !n.ctx) n.ctx = root.LQSim.rhelLabel(h, k);
             h.fs.delete(k);
             h.fs.set(target + k.slice(sr.path.length), n);
           }

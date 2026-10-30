@@ -5,7 +5,7 @@
 const path = require("path");
 const assert = require("assert");
 
-for (const f of ["sim.js", "sim-ops.js", "world.js", "scenarios.js"]) require(path.resolve(__dirname, "../site", f));
+for (const f of ["sim.js", "sim-ops.js", "sim-admin.js", "world.js", "rhel.js", "scenarios.js"]) require(path.resolve(__dirname, "../site", f));
 const L = globalThis.LQSim;
 const { SCENARIOS, Host, shell, lex, human, parseMode } = L;
 
@@ -33,7 +33,8 @@ for (const s of SCENARIOS) {
   assert.ok(c.label && c.text && c.ok === false, `${s.id}: live check starts red`);
   for (const cmd of [...s.tries, "ps aux", "df -h", "systemctl status ssh"]) assert.ok(run(h, cmd).length > 0, `${s.id}: "${cmd}" prints something`);
 }
-assert.ok(SCENARIOS.length >= 40, "at least 40 scenarios");
+assert.ok(SCENARIOS.length >= 60, "at least 60 scenarios");
+assert.ok(SCENARIOS.some((s) => s.distro === "rhel") && SCENARIOS.some((s) => !s.distro), "Ubuntu and Rocky Linux hosts");
 assert.strictEqual(new Set(SCENARIOS.map((s) => s.id)).size, SCENARIOS.length, "scenario ids are unique");
 
 // Shell basics on any scenario.
@@ -645,6 +646,209 @@ run(h, "printf '[Service]\\nLimitNOFILE=65535\\n' | sudo tee /etc/systemd/system
 run(h, "sudo systemctl daemon-reload && sudo systemctl restart gateway");
 assert.match(run(h, "cat /proc/$(pgrep gateway)/limits | grep 'open files'"), /65535/);
 fixed(h, "ulimit: LimitNOFILE in a drop-in");
+
+// --- Added scenarios: services, logs, storage, access, memory
+
+h = fresh("envmissing");
+assert.match(run(h, "journalctl -u reports-api -n 5"), /Error: DATABASE_URL is not set/);
+assert.match(run(h, "echo $DATABASE_URL"), /^postgres:\/\/reports@db\.internal/);
+run(h, "export DATABASE_URL=postgres://reports@db.internal:5432/reports && sudo systemctl restart reports-api");
+broken(h, "your shell's export never reaches a service");
+run(h, "echo 'DATABASE_URL=postgres://reports@db.internal:5432/reports' | sudo tee -a /etc/environment && sudo systemctl restart reports-api");
+broken(h, "/etc/environment is read by PAM logins, not by systemd services");
+run(h, "sudo mkdir -p /etc/systemd/system/reports-api.service.d");
+run(h, "printf '[Service]\\nEnvironment=DATABASE_URL=postgres://reports@db.internal:5432/reports\\n' | sudo tee /etc/systemd/system/reports-api.service.d/env.conf");
+run(h, "sudo systemctl daemon-reload && sudo systemctl restart reports-api");
+fixed(h, "envmissing: Environment= in a drop-in");
+
+h = fresh("logrotate");
+assert.match(run(h, "sudo logrotate -d /etc/logrotate.d/orders"), /error: skipping "\/var\/log\/orders\/orders\.log" because parent directory has insecure permissions/);
+run(h, "sudo sed -i '/missingok/a \\    su orders orders' /etc/logrotate.d/orders");
+assert.match(run(h, "sudo logrotate -v -f /etc/logrotate.d/orders"), /renaming \/var\/log\/orders\/orders\.log to \/var\/log\/orders\/orders\.log\.1/);
+assert.match(run(h, "sudo lsof +L1"), /orders\.log\.1 \(deleted\)/, "gzip removed the renamed file while orders still writes it");
+broken(h, "rotating under a running writer keeps the space held");
+run(h, "sudo systemctl restart orders");
+broken(h, "the space is back, but the next rotation repeats it");
+run(h, "sudo sed -i 's/^    create .*/    copytruncate/' /etc/logrotate.d/orders");
+fixed(h, "logrotate: su plus copytruncate");
+h = fresh("logrotate");
+run(h, "sudo chmod 755 /var/log/orders");
+run(h, "sudo sed -i 's/^    create .*/    copytruncate/' /etc/logrotate.d/orders");
+assert.match(run(h, "sudo logrotate -v -f /etc/logrotate.d/orders"), /truncating \/var\/log\/orders\/orders\.log/);
+fixed(h, "logrotate: folder permissions plus copytruncate");
+
+h = fresh("journalfull");
+assert.match(run(h, "journalctl --disk-usage"), /Archived and active journals take up 9\.\dG/);
+assert.match(run(h, "sudo journalctl --vacuum-size=500M"), /Deleted archived journal [\s\S]*Vacuuming done, freed/);
+broken(h, "without a cap it fills again");
+run(h, "sudo sed -i 's/^#SystemMaxUse=.*/SystemMaxUse=500M/' /etc/systemd/journald.conf");
+fixed(h, "journalfull: vacuumed and capped");
+h = fresh("journalfull");
+run(h, "sudo sed -i 's/^#SystemMaxUse=.*/SystemMaxUse=500M/' /etc/systemd/journald.conf && sudo systemctl restart systemd-journald");
+fixed(h, "journalfull: journald trims to SystemMaxUse when it starts");
+h = fresh("journalfull");
+run(h, "sudo rm -rf /var/log/journal/ec2a1f3e9c6b4d0f8e21a7c35d90b1f4/*");
+broken(h, "deleting files by hand sets no cap");
+
+h = fresh("nfsstale");
+assert.match(run(h, "ls /mnt/shared"), /ls: cannot access '\/mnt\/shared': Stale file handle/);
+assert.match(run(h, "df -h"), /df: \/mnt\/shared: Stale file handle/);
+assert.match(run(h, "sudo umount /mnt/shared"), /umount\.nfs4: \/mnt\/shared: device is busy/);
+run(h, "sudo umount -l /mnt/shared && sudo mount /mnt/shared");
+assert.match(run(h, "df -h /mnt/shared"), /nfs-01:\/exports\/shared/);
+fixed(h, "nfsstale: remounted");
+h = fresh("nfsstale");
+run(h, "sudo reboot");
+broken(h, "a reboot is not the goal");
+
+h = fresh("bruteforce");
+assert.match(run(h, "sudo tail -3 /var/log/auth.log"), /Failed password for invalid user \w+ from [\d.]+ port \d+ ssh2/);
+assert.match(run(h, "sudo sshd -T | grep -i passwordauthentication"), /^passwordauthentication yes$/);
+run(h, "sudo systemctl reload ssh");
+broken(h, "the No at the bottom of sshd_config is never read: first value wins");
+run(h, "sudo ufw deny from 203.0.113.77");
+broken(h, "blocking one address leaves the rest");
+run(h, "sudo sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config.d/60-cloudimg-settings.conf");
+assert.strictEqual(run(h, "sudo sshd -t"), "");
+broken(h, "sshd reads its config on reload");
+run(h, "sudo systemctl reload ssh");
+assert.match(run(h, "sudo tail -1 /var/log/auth.log"), /\[preauth\]/);
+assert.match(run(h, "sudo fail2ban-client status sshd"), /command not found/);
+run(h, "sudo apt install -y fail2ban");
+assert.match(run(h, "sudo fail2ban-client status sshd"), /Banned IP list:\s+203\.0\.113\.77/);
+fixed(h, "bruteforce: keys only, fail2ban on");
+
+h = fresh("certexpired");
+assert.match(run(h, "curl -I https://shop.example"), /curl: \(60\) SSL certificate problem: certificate has expired/);
+assert.match(run(h, "sudo openssl x509 -enddate -noout -in /etc/letsencrypt/live/shop.example/fullchain.pem"), /^notAfter=Oct 28 09:14:00 2026 GMT$/);
+assert.match(run(h, "sudo certbot certificates"), /INVALID: EXPIRED/);
+run(h, "sudo systemctl restart nginx");
+broken(h, "restarting serves the same expired file");
+assert.match(run(h, "sudo certbot renew"), /Congratulations, all renewals succeeded/);
+assert.match(run(h, "curl -sI https://shop.example; echo $?"), /^60$/m, "nginx still serves the old certificate from memory");
+run(h, "sudo systemctl reload nginx");
+assert.match(run(h, "curl -I https://shop.example"), /200 OK/);
+broken(h, "nothing will renew it next time");
+run(h, "sudo systemctl enable --now certbot.timer");
+assert.match(run(h, "systemctl status certbot.timer"), /Active: active \(waiting\)/);
+fixed(h, "certexpired: renewed, reloaded, timer on");
+
+h = fresh("nfshang");
+assert.match(run(h, "top"), /load average: [4-9]\.\d\d/);
+assert.match(run(h, "df -h"), /^\^C\n\(the command hung in state D/);
+assert.match(run(h, "df -hl"), /\/dev\/nvme0n1p1/);
+assert.match(run(h, "ps -eo pid,stat,cmd | grep -c ' D '"), /^6$/);
+run(h, "sudo kill -9 3801 3802 3803");
+broken(h, "kill -9 cannot end a process in D state");
+assert.match(run(h, "sudo umount /mnt/reports"), /device is busy/);
+assert.match(run(h, "sudo umount -f /mnt/reports"), /device is busy/);
+run(h, "sudo umount -f -l /mnt/reports");
+fixed(h, "nfshang: lazy unmount releases them");
+
+h = fresh("memleak");
+const wpid = run(h, "pgrep worker");
+const rssOf = () => Number(run(h, `ps -o pid,rss -p ${wpid}`).split("\n")[1].trim().split(/\s+/)[1]);
+const rss1 = rssOf();
+run(h, "sleep 60");
+assert.ok(rssOf() > rss1, "RSS grows over time");
+run(h, "echo 3 | sudo tee /proc/sys/vm/drop_caches");
+broken(h, "dropping caches frees nothing a process holds");
+run(h, "sudo systemctl restart queue-worker");
+broken(h, "a restart without a limit just resets the clock");
+run(h, "sudo systemctl set-property queue-worker MemoryMax=1G && sudo systemctl restart queue-worker");
+fixed(h, "memleak: capped with MemoryMax");
+run(h, "sleep 600");
+assert.match(run(h, "journalctl -u queue-worker -n 20"), /killed by the OOM killer[\s\S]*Scheduled restart job/);
+fixed(h, "memleak: still contained after it hits the limit");
+
+h = fresh("swapfile");
+run(h, "sudo fallocate -l 2G /swapfile");
+assert.match(run(h, "sudo swapon /swapfile"), /swapon: \/swapfile: read swap header failed/);
+assert.match(run(h, "sudo mkswap /swapfile"), /insecure permissions 0644[\s\S]*Setting up swapspace version 1, size = 2/);
+assert.match(run(h, "sudo swapon /swapfile"), /insecure permissions 0644, 0600 suggested/);
+broken(h, "swap readable by others");
+run(h, "sudo chmod 600 /swapfile");
+broken(h, "not in fstab: gone after a reboot");
+run(h, "echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab");
+fixed(h, "swapfile: 600, active, in fstab");
+run(h, "sudo reboot");
+assert.match(run(h, "swapon --show"), /\/swapfile file\s+2G/);
+fixed(h, "swapfile: back after reboot");
+
+// --- Rocky Linux and RHEL
+
+h = fresh("dnfepel");
+assert.strictEqual(run(h, "whoami"), "rocky");
+assert.match(run(h, "cat /etc/redhat-release"), /Rocky Linux release 9\.4/);
+assert.match(run(h, "apt install htop"), /^-bash: apt: command not found$/);
+assert.match(run(h, "dnf install htop"), /Error: This command has to be run with superuser privileges/);
+assert.match(run(h, "sudo dnf install htop"), /No match for argument: htop\nError: Unable to find a match: htop/);
+assert.doesNotMatch(run(h, "dnf repolist"), /epel/);
+run(h, "sudo dnf install -y epel-release");
+assert.match(run(h, "dnf repolist"), /epel\s+Extra Packages for Enterprise Linux 9/);
+assert.match(run(h, "sudo dnf install -y htop"), /Installing:\n htop\s+x86_64\s+3\.3\.0-1\.el9\s+epel[\s\S]*Complete!/);
+assert.match(run(h, "rpm -q htop"), /^htop-3\.3\.0-1\.el9\.x86_64$/);
+fixed(h, "dnfepel: from EPEL");
+
+h = fresh("selinux");
+assert.match(run(h, "curl -I localhost"), /403 Forbidden/);
+assert.match(run(h, "ls -l /srv/shop"), /^-rw-r--r--\. 1 root root/m);
+assert.match(run(h, "ls -Z /srv/shop"), /unconfined_u:object_r:user_home_t:s0 index\.html/);
+assert.match(run(h, "sudo ausearch -m avc -ts recent"), /avc:  denied  \{ read \} for  pid=\d+ comm="nginx" name="index\.html".* scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=0/);
+run(h, "sudo chmod -R 777 /srv/shop");
+broken(h, "permissions were never the problem");
+run(h, "sudo restorecon -Rv /srv/shop");
+assert.match(run(h, "ls -Z /srv/shop"), /var_t/);
+broken(h, "restorecon alone applies the default label for /srv, var_t");
+run(h, "sudo setenforce 0");
+assert.match(run(h, "curl -I localhost"), /200 OK/);
+broken(h, "permissive mode is not a fix");
+run(h, "sudo setenforce 1 && sudo chcon -R -t httpd_sys_content_t /srv/shop");
+broken(h, "chcon lasts until the next relabel");
+run(h, "sudo chmod -R go-w /srv/shop");
+run(h, "sudo semanage fcontext -a -t httpd_sys_content_t '/srv/shop(/.*)?' && sudo restorecon -Rv /srv/shop");
+assert.match(run(h, "curl -I localhost"), /200 OK/);
+fixed(h, "selinux: fcontext rule and restorecon");
+
+h = fresh("selinuxport");
+assert.match(run(h, "journalctl -u nginx -n 6"), /nginx: \[emerg\] bind\(\) to 0\.0\.0\.0:8090 failed \(13: Permission denied\)/);
+assert.match(run(h, "sudo semanage port -l | grep http_port_t"), /http_port_t\s+tcp\s+80, 81, 443/);
+run(h, "sudo setenforce 0 && sudo systemctl start nginx");
+broken(h, "running with SELinux off");
+h = fresh("selinuxport");
+assert.match(run(h, "sudo semanage port -a -t http_port_t -p tcp 80"), /ValueError: Port tcp\/80 already defined/);
+run(h, "sudo semanage port -a -t http_port_t -p tcp 8090 && sudo systemctl start nginx");
+assert.match(run(h, "sudo ss -tlnp"), /0\.0\.0\.0:8090/);
+fixed(h, "selinuxport: port labelled");
+
+h = fresh("firewalld");
+assert.match(run(h, "ufw status"), /command not found/);
+assert.match(run(h, "sudo firewall-cmd --list-all"), /services: cockpit dhcpv6-client ssh\n  ports: $/m);
+run(h, "sudo firewall-cmd --add-port=8080/tcp");
+broken(h, "runtime only: lost at the next reload");
+run(h, "sudo firewall-cmd --reload");
+assert.doesNotMatch(run(h, "sudo firewall-cmd --list-ports"), /8080/);
+run(h, "sudo systemctl stop firewalld");
+broken(h, "stopping the firewall is not the fix");
+assert.match(run(h, "sudo firewall-cmd --list-all"), /FirewallD is not running/);
+run(h, "sudo systemctl start firewalld");
+assert.strictEqual(run(h, "sudo firewall-cmd --permanent --add-port=8080/tcp"), "success");
+run(h, "sudo firewall-cmd --reload");
+fixed(h, "firewalld: permanent and runtime");
+
+h = fresh("lvm");
+assert.match(run(h, "df -hT /"), /\/dev\/mapper\/rl-root xfs\s+20G/);
+assert.match(run(h, "sudo vgs"), /rl\s+1\s+1\s+0 wz--n-\s+49\.00g\s+29\.00g/);
+assert.match(run(h, "lsblk"), /└─rl-root\s+253:0\s+0\s+20G\s+0 lvm\s+\//);
+assert.match(run(h, "sudo resize2fs /dev/mapper/rl-root"), /Bad magic number in super-block/);
+assert.match(run(h, "sudo lvextend -L +40G /dev/rl/root"), /Insufficient free space/);
+assert.match(run(h, "sudo lvextend -L +20G /dev/rl/root"), /Size of logical volume rl\/root changed from 20\.00 GiB \(5120 extents\) to 40\.00 GiB \(10240 extents\)\.\n  Logical volume rl\/root successfully resized\./);
+broken(h, "the volume grew, the file system did not");
+assert.match(run(h, "sudo xfs_growfs /"), /data blocks changed from 5242880 to 10485760/);
+fixed(h, "lvm: lvextend then xfs_growfs");
+h = fresh("lvm");
+run(h, "sudo lvextend -r -L +20G /dev/rl/root");
+fixed(h, "lvm: lvextend -r");
 
 // The cheat sheet: each command marked Try runs as written in its scenario, and each
 // one left to Lab really cannot run here, so neither list goes stale.

@@ -41,7 +41,7 @@
   const procOf = (h, pid) => h.procs.find((p) => p.pid === Number(pid));
   // Heavy I/O makes its victims wait in D; idle I/O priority lets them run.
   const ioHogs = (h) => h.procs.filter((p) => p.io && p.ioclass !== 3);
-  const statOf = (h, p) => (p.ioVictim && ioHogs(h).length ? "D" : p.stat);
+  const statOf = (h, p) => ((p.ioVictim && ioHogs(h).length) || (p.nfs && h.mounts.some((m) => m.mnt === p.nfs && m.hung && !m.gone)) ? "D" : p.stat);
   function cpuStats(h) {
     const ncpu = h.cpus || 2;
     const busy = h.procs.reduce((s, p) => s + (statOf(h, p) === "Z" ? 0 : p.cpu), 0);
@@ -107,8 +107,9 @@
     }
     return null;
   }
+  // set-property writes to system.control, which outranks /etc/systemd/system.
   function dropins(h, name) {
-    return UNIT_DIRS.flatMap((d) => h.kids(`${d}/${name}.d`).filter((k) => k.endsWith(".conf")).map((k) => `${d}/${name}.d/${k}`));
+    return [...UNIT_DIRS, "/etc/systemd/system.control"].flatMap((d) => h.kids(`${d}/${name}.d`).filter((k) => k.endsWith(".conf")).map((k) => `${d}/${name}.d/${k}`));
   }
   function diskText(h, name) {
     const f = unitFile(h, name);
@@ -215,6 +216,7 @@
     if (!f || loadedText(h, name) === null) return [`Failed to start ${name}: Unit ${name} not found.`];
     const st = state(h, name);
     if (st.active === "active") return [];
+    if (name.endsWith(".timer")) { Object.assign(st, { active: "active", sub: "waiting", result: "success", since: h.clock }); h.log("systemd", `Started ${name} - ${cfgOf(h, name).desc}.`, { pid: 1, unit: name }); return []; }
     const cfg = cfgOf(h, name);
     const limit = Number(cfg.one("Unit", "StartLimitIntervalSec") || 10) * 1000;
     const burst = Number(cfg.one("Unit", "StartLimitBurst") || 5);
@@ -245,7 +247,8 @@
   }
   function stop(h, name) {
     const st = state(h, name);
-    if (st.active !== "active") { if (st.active === "failed") Object.assign(st, { active: "failed" }); return; }
+    if (st.active !== "active") return;
+    if (name.endsWith(".timer")) { Object.assign(st, { active: "inactive", sub: "dead", since: h.clock }); return; }
     const cfg = cfgOf(h, name);
     const label = `${name}${cfg.desc ? " - " + cfg.desc : ""}`;
     h.log("systemd", `Stopping ${label}...`, { pid: 1, unit: name });
@@ -295,7 +298,7 @@
     }
     h.dmesg(`Linux version ${h.kernel} (buildd@lcy02-amd64-075) (x86_64-linux-gnu-gcc-13 (Ubuntu 13.2.0-23ubuntu4) 13.2.0) #16-Ubuntu SMP`, 0);
     if (!mountFstab(h, true)) { h.booting = false; if (first) h.clock = now; return; }
-    const wanted = [...h.fs.keys()].filter((k) => /^\/etc\/systemd\/system\/multi-user\.target\.wants\/[^/]+$/.test(k)).map(basename);
+    const wanted = [...h.fs.keys()].filter((k) => /^\/etc\/systemd\/system\/(multi-user|timers)\.target\.wants\/[^/]+$/.test(k)).map(basename);
     const order = [];
     const visit = (n, seen = new Set()) => {
       if (order.includes(n) || seen.has(n) || !wanted.includes(n)) return;
@@ -321,6 +324,7 @@
     const entries = fstab(h);
     for (const e of entries) {
       if (e.mnt === "/" || e.type === "swap" || h.mounts.some((m) => m.mnt === e.mnt && !m.gone)) continue;
+      if (e.spec.includes(":")) { L.nfsMount(h, e); continue; }
       const dev = findDev(h, e.spec);
       if (!dev) {
         if (!booting) continue;
@@ -377,10 +381,14 @@
     if (rootM) rootM.ro = false;
     h.sysctl = { ...h.sysctlDefaults };
     applySysctlFiles(h);
+    h.swaps = [];
+    h.mem.swap = 0;
+    h.mem.swapBase = 0;
+    CMDS.swapon({ h, user: "root", cwd: "/", env: {} }, ["-a"]);
     h.hostname = (h.read("/etc/hostname") || "web-01").trim();
     if (L.world.system) L.world.system(h);
     bootUp(h, false);
-    h.sess = h.newSession(h.emergency ? "root" : h.scenario.user || "ubuntu");
+    h.sess = h.newSession(h.emergency ? "root" : h.scenario.user || h.defaultUser);
   }
 
   // --- procfs ------------------------------------------------------------------------
@@ -746,12 +754,12 @@
     const dins = dropins(h, name);
     if (dins.length) out.push(`    Drop-In: ${dirname(dins[0])}`, ...dins.map((d, i) => `             ${i === dins.length - 1 ? "└─" : "├─"}${basename(d)}`));
     const since = `since ${longDate(st.since)} UTC; ${ago(h.clock - st.since)}`;
-    if (st.active === "active") out.push(`     Active: active (running) ${since}`);
+    if (st.active === "active") out.push(`     Active: active (${st.sub || "running"}) ${since}`);
     else if (st.active === "failed") out.push(`     Active: failed (Result: ${st.result}) ${since}`);
     else out.push(`     Active: inactive (dead)${st.since !== h.boot ? ` ${since}` : ""}`);
     const docs = cfg.one("Unit", "Documentation");
     if (docs) out.push(`       Docs: ${docs}`);
-    if (st.active === "active") {
+    if (st.active === "active" && !name.endsWith(".timer")) {
       const p = procOf(h, st.pid);
       const kids = h.procs.filter((q) => q.unit === name && q !== p);
       out.push(`   Main PID: ${st.pid} (${p ? p.comm : "?"})`, `      Tasks: ${1 + kids.length} (limit: 4558)`,
@@ -905,6 +913,7 @@
         const props = names.slice(1);
         const dir = `/etc/systemd/system.control/${n}.d`;
         for (const p of props) h.file(`${dir}/50-${p.split("=")[0]}.conf`, `# This is a drop-in unit file extension, created via "systemctl set-property"\n# or an equivalent operation. Do not edit.\n[Service]\n${p}\n`);
+        if (n in h.loaded) h.loaded[n] = diskText(h, n);
         const p = procOf(h, state(h, n).pid);
         if (p && p.onProperty) p.onProperty(h, props, p);
         return ok();
@@ -928,7 +937,7 @@
         if (rootM) rootM.ro = false;
         h.booting = true;
         bootUp(h, true);
-        h.sess = h.newSession(h.scenario.user || "ubuntu");
+        h.sess = h.newSession(h.scenario.user || h.defaultUser);
         return { out: [], err: [], code: 0, notes: ["(the boot continues to multi-user.target; you are logged in again)"] };
       }
       default: return fail(`Unknown command verb '${verb}', expected one of: status, start, stop, restart, enable, disable, mask, unmask, daemon-reload, reset-failed, is-active, is-enabled, cat, show, list-units.`);
@@ -941,20 +950,21 @@
     const a = args.flatMap((x, i) => (x === "-b" ? [/^-?\d+$/.test(args[i + 1] || "") ? `--boot=${args[i + 1]}` : "--boot=0"] : /^-?\d+$/.test(x) && args[i - 1] === "-b" ? [] : [x]));
     const { f } = opts(a, "unpS");
     if (f.boot !== undefined) f.b = f.boot;
-    if (c.user !== "root" && !h.groupsOf(c.user).some((g) => g === "adm" || g === "systemd-journal")) {
+    if (c.user !== "root" && !h.groupsOf(c.user).some((g) => g === "adm" || g === "wheel" || g === "systemd-journal")) {
       return { out: ["-- No entries --"], err: [], code: 0, notes: ["(Hint: You are currently not seeing messages from other users and the system. Users in groups 'adm', 'systemd-journal' can see all messages. Pass -q to turn off this notice.)"] };
     }
-    if (f["disk-usage"]) return ok([`Archived and active journals take up ${human(h.journalBytes || 312 * MiB)}B in the file system.`.replace("BB", "B")]);
-    if (f["vacuum-size"] || f["vacuum-time"]) {
-      const before = h.journalBytes || 312 * MiB;
-      const target = f["vacuum-size"] ? L.parseSize(f["vacuum-size"].replace(/([KMG])$/i, "$1")) : 64 * MiB;
-      h.journalBytes = Math.min(before, target || before);
-      return ok([`Vacuuming done, freed ${human(before - h.journalBytes)}B of archived journals from /var/log/journal/ec2a1f3e9c6b4d0f8e21a7c35d90b1f4.`.replace("BB", "B")]);
+    if (f["disk-usage"]) return ok([`Archived and active journals take up ${human(L.journal.bytes(h))}.`.replace(/([KMG])\.$/, "$1B.")]);
+    if (f["vacuum-size"] || f["vacuum-time"] || f["vacuum-files"]) {
+      if (c.user !== "root") return fail(`Failed to open directory ${L.journal.dir}: Permission denied`);
+      const before = L.journal.bytes(h);
+      const target = f["vacuum-size"] ? L.parseSize(String(f["vacuum-size"]).replace(/([KMG])$/i, "$1")) : 64 * MiB;
+      const out = L.journal.vacuum(h, target || before);
+      return ok([...out, `Vacuuming done, freed ${human(before - L.journal.bytes(h))}B of archived journals from ${L.journal.dir}.`.replace(/([KMG])BB/, "$1B").replace(" 0B", " 0B")]);
     }
     const units = [f.u, ...a.filter((x, i) => a[i - 1] === "-u" || a[i - 1] === "--unit").slice(1)].filter((x) => typeof x === "string").map(unitName);
     let list = h.journal.slice().sort((a, b) => a.t - b.t);
     if (f.k) list = h.kmsg.filter((e) => e.boot === h.boots).map((e) => ({ t: h.boot + e.t * 1000, ident: "kernel", msg: e.msg, boot: e.boot }));
-    if (units.length) list = list.filter((e) => units.includes(e.unit) || (units.includes("ssh.service") && e.ident === "sshd"));
+    if (units.length) list = list.filter((e) => units.includes(e.unit) || (units.some((u) => /^sshd?\.service$/.test(u)) && e.ident === "sshd"));
     if (f.b !== undefined) {
       const which = f.b === true ? 0 : Number(f.b);
       if (which < 0 && h.boots + which < 0) return fail(`Data from the specified boot (${which}) is not available: No such boot ID in journal`);
@@ -988,7 +998,12 @@
   CMDS.df = (c, args) => {
     const h = c.h;
     const { f, rest } = opts(args);
-    let ms = h.mounts.filter((m) => !m.gone && (f.a || m.type !== "swap"));
+    const dfErr = [];
+    let ms = h.mounts.filter((m) => !m.gone && (f.a || m.type !== "swap") && !(f.l && m.nfs)).filter((m) => {
+      if (m.stale) dfErr.push(`df: ${m.mnt}: Stale file handle`);
+      if (m.hung) h.hungHit = m;
+      return !m.stale && !m.hung;
+    });
     if (rest.length) {
       const pick = [];
       for (const r of rest) {
@@ -1014,13 +1029,13 @@
     const head = f.i ? ["Filesystem", "Inodes", "IUsed", "IFree", "IUse%", "Mounted on"] : ["Filesystem", ...(f.T ? ["Type"] : []), f.h ? "Size" : "1K-blocks", "Used", f.h ? "Avail" : "Available", "Use%", "Mounted on"];
     const all = [head, ...rows];
     const w = head.map((_, i) => Math.max(...all.map((r) => r[i].length)));
-    return ok(all.map((r) => r.map((v, i) => (i === 0 || i === r.length - 1 || (f.T && i === 1) ? v.padEnd(i === r.length - 1 ? 0 : w[i]) : v.padStart(w[i]))).join(" ").trimEnd()));
+    return { out: all.map((r) => r.map((v, i) => (i === 0 || i === r.length - 1 || (f.T && i === 1) ? v.padEnd(i === r.length - 1 ? 0 : w[i]) : v.padStart(w[i]))).join(" ").trimEnd()), err: dfErr, code: dfErr.length ? 1 : 0 };
   };
   const blkSize = (b) => { const g = b / GiB; return g >= 1 ? (Number.isInteger(Math.round(g * 10) / 10) ? Math.round(g) : (Math.round(g * 10) / 10)) + "G" : Math.round(b / MiB) + "M"; };
   CMDS.lsblk = (c, args) => {
     const h = c.h;
     const { f } = opts(args);
-    const w = Math.max(7, ...h.disks.flatMap((dk) => (dk.parts || []).map((p) => p.name.length + 2)));
+    const w = Math.max(7, ...h.disks.flatMap((dk) => (dk.parts || []).map((p) => p.name.length + 2)), ...(h.lvm ? h.lvm.lvs.map((l) => l.name.length + 7) : []));
     const mp = (p) => { const m = h.mounts.find((x) => x.dev === "/dev/" + p.name && !x.gone); return m ? m.mnt : p.swap ? "[SWAP]" : ""; };
     const out = [f.f ? `${"NAME".padEnd(w)} FSTYPE FSVER LABEL           UUID                                 FSAVAIL FSUSE% MOUNTPOINTS` : `${"NAME".padEnd(w)} MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS`];
     h.disks.forEach((dk, di) => {
@@ -1032,6 +1047,8 @@
           const u = m && h.usage(m);
           out.push(`${(tree + p.name).padEnd(w)} ${(p.fs || "").padEnd(6)} ${(p.fs === "ext4" ? "1.0" : p.fs === "vfat" ? "FAT32" : "").padEnd(5)} ${(p.label || "").padEnd(15)} ${(p.uuid || "").padEnd(36)} ${m ? human(Math.max(0, m.size * 0.95 - u.bytes)).padStart(7) + " " + (Math.ceil(u.bytes / m.size * 100) + "%").padStart(6) : "              "} ${mp(p)}`.trimEnd());
         } else out.push(`${(tree + p.name).padEnd(w)} ${(259 + ":" + (di * 16 + i + 1)).padEnd(7)}  0 ${blkSize(p.size).padStart(5)}  ${p.ro ? 1 : 0} part ${mp(p)}`.trimEnd());
+        // An LVM physical volume carries its logical volumes.
+        if (p.fs === "LVM2_member" && h.lvm) h.lvm.lvs.forEach((lv, k) => out.push(`${`  ${k === h.lvm.lvs.length - 1 ? "└─" : "├─"}rl-${lv.name}`.padEnd(w)} ${`253:${k}`.padEnd(7)}    0 ${blkSize(lv.size).padStart(5)}  0 lvm  ${(h.mounts.find((m) => m.dev === `/dev/mapper/rl-${lv.name}` && !m.gone) || {}).mnt || ""}`.trimEnd()));
       });
     });
     return ok(out);
@@ -1070,6 +1087,7 @@
     if (f.a) {
       for (const e of fstab(h)) {
         if (e.mnt === "/" || e.type === "swap" || e.opts.includes("noauto") || h.mounts.some((m) => m.mnt === e.mnt && !m.gone)) continue;
+        if (e.spec.includes(":")) { const ne = L.nfsMount(h, e); if (ne) err.push(ne); continue; }
         const dev = findDev(h, e.spec);
         if (!dev) { if (!e.opts.includes("nofail")) err.push(`mount: ${e.mnt}: can't find ${e.spec}.`); continue; }
         if (dev.errorsHard) { err.push(`mount: ${e.mnt}: wrong fs type, bad option, bad superblock on /dev/${dev.name}, missing codepage or helper program, or other error.`, "       dmesg(1) may have more information after failed mount system call."); continue; }
@@ -1082,6 +1100,11 @@
     if (rest.length === 1) {
       const e = fstab(h).find((x) => x.mnt === norm(rest[0], c.cwd) || x.spec === rest[0]);
       if (!e) return fail(`mount: ${rest[0]}: can't find in /etc/fstab.`, 1);
+      if (e.spec.includes(":")) {
+        if (h.mounts.some((m) => m.mnt === e.mnt && !m.gone)) return fail(`mount.nfs4: ${e.mnt} is busy or already mounted`, 32);
+        const ne = L.nfsMount(h, e);
+        return ne ? fail(ne, 32) : { out: [], err, code: 0 };
+      }
       dev = findDev(h, e.spec);
       mnt = e.mnt;
       if (!dev) return fail([...err, `mount: ${mnt}: can't find ${e.spec}.`], 32);
@@ -1101,6 +1124,7 @@
     const m = h.mounts.find((x) => (x.mnt === target || x.dev === target) && !x.gone);
     if (c.user !== "root") return fail(`umount: ${target}: must be superuser to unmount.`, 32);
     if (!m) return fail(`umount: ${target}: not mounted.`, 32);
+    if (m.nfs) { const e = L.nfsUmount(h, m, { l: args.some((a) => /^-[a-z]*l/.test(a)), f: args.some((a) => /^-[a-z]*f/.test(a)) }); return e ? fail(e, 32) : ok(); }
     const inside = (p) => p === m.mnt || p.startsWith(m.mnt + "/");
     const busy = h.procs.some((p) => (p.cwd && inside(p.cwd)) || p.fds.some((fd) => inside(fd.path))) || inside(h.sess.cwd);
     if (busy && !args.includes("-l")) return fail(`umount: ${m.mnt}: target is busy.`, 32);
@@ -1144,6 +1168,8 @@
     const h = c.h;
     const devArg = args.find((a) => a.startsWith("/dev/")) || "";
     const part = h.disks.flatMap((dk) => dk.parts || []).find((p) => "/dev/" + p.name === devArg);
+    const xfs = h.mounts.find((m) => (m.dev === devArg || m.dev === devArg.replace(/^\/dev\/rl\//, "/dev/mapper/rl-")) && m.type === "xfs");
+    if (xfs) return fail(["resize2fs 1.46.5 (30-Dec-2021)", `resize2fs: Bad magic number in super-block while trying to open ${devArg}`, "Couldn't find valid filesystem superblock."]);
     if (!part) return fail(["resize2fs 1.47.0 (5-Feb-2023)", `open: No such file or directory while opening ${devArg}`]);
     if (c.user !== "root") return fail(["resize2fs 1.47.0 (5-Feb-2023)", `open: Permission denied while opening ${devArg}`]);
     const m = h.mounts.find((x) => x.dev === devArg && !x.gone);
@@ -1154,12 +1180,29 @@
     part.fsSize = part.size;
     return ok(["resize2fs 1.47.0 (5-Feb-2023)", `Filesystem at ${devArg} is mounted on ${m ? m.mnt : "/"}; on-line resizing required`, "old_desc_blocks = 3, new_desc_blocks = 7", `The filesystem on ${devArg} is now ${blocks(part.size)} (4k) blocks long.`, ""]);
   };
+  // Active swap: h.swaps [{path, kib}], with h.mem.swap their total.
   CMDS.swapon = (c, args) => {
     const h = c.h, m = memStats(h);
-    if (args.includes("--show") || args.includes("-s") || !args.length) return ok(h.mem.swap ? ["NAME      TYPE SIZE USED PRIO", `/swap.img file ${human(h.mem.swap * 1024)} ${human(m.swapUsed * 1024).padStart(4)}   -2`] : []);
-    if (c.user !== "root") return fail(`swapon: /swap.img: swapon failed: Operation not permitted`);
-    if (h.mem.swapOff) { h.mem.swap = h.mem.swapOff; h.mem.swapOff = 0; }
-    return ok();
+    const swaps = h.swaps || [];
+    const paths = args.filter((a) => a.startsWith("/") || a.startsWith("."));
+    if (args.includes("--show") || args.includes("-s") || (!args.length)) {
+      const used = (k) => (k ? human(k * 1024) : "0B");
+      return ok(swaps.length ? ["NAME      TYPE SIZE USED PRIO", ...swaps.map((s, i) => `${s.path.padEnd(9)} file ${blkSize(s.kib * 1024).padStart(4)} ${used(i ? 0 : Math.round(m.swapUsed)).padStart(4)}   -${i + 2}`)] : []);
+    }
+    if (c.user !== "root") return fail(`swapon: ${paths[0] || "/swap.img"}: swapon failed: Operation not permitted`);
+    const targets = args.includes("-a") ? fstab(h).filter((e) => e.type === "swap").map((e) => e.spec) : paths.map((p) => norm(p, c.cwd));
+    const err = [];
+    for (const p of targets) {
+      const n = h.fs.get(p);
+      if (!n) { err.push(`swapon: cannot open ${p}: No such file or directory`); continue; }
+      if (swaps.some((s) => s.path === p)) { if (!args.includes("-a")) err.push(`swapon: ${p}: swapon failed: Device or resource busy`); continue; }
+      if (!n.swap) { err.push(`swapon: ${p}: read swap header failed`); continue; }
+      if (n.m & 0o077) err.push(`swapon: ${p}: insecure permissions 0${(n.m & 0o777).toString(8)}, 0600 suggested.`);
+      swaps.push({ path: p, kib: Math.round(h.sizeOf(n) / 1024) });
+    }
+    h.swaps = swaps;
+    h.mem.swap = swaps.reduce((s, x) => s + x.kib, 0);
+    return { out: [], err, code: err.some((e) => !/insecure/.test(e)) ? 255 : 0 };
   };
   CMDS.swapoff = (c) => {
     const h = c.h, m = memStats(h);
@@ -1167,7 +1210,7 @@
     if (!h.mem.swap) return ok();
     // Everything in swap must fit back into free RAM.
     if (m.swapUsed > m.free + m.cache * 0.8) return fail("swapoff: /swap.img: swapoff failed: Cannot allocate memory", 255);
-    h.mem.swapOff = h.mem.swap;
+    h.swaps = [];
     h.mem.swap = 0;
     h.mem.swapBase = 0;
     return ok();
@@ -1236,6 +1279,7 @@
   }
   // Is a remote host allowed in on a port by the firewall?
   function inbound(h, port, from) {
+    if (h.distro === "rhel") return L.firewalldAllows(h, port);
     const fw = h.net.fw;
     if (!fw.active) return true;
     return fw.rules.some((r) => r.action === "ALLOW" && (r.port === port || r.port == null) && (!r.from || inNet(from, r.from.includes("/") ? r.from : r.from + "/32")));
@@ -1256,6 +1300,9 @@
     if (route.local) {
       const p = listener(h, r.ip, port);
       if (!p) return { exit: 7, err: `curl: (7) Failed to connect to ${host} port ${port} after 0 ms: Couldn't connect to server` };
+      if (scheme === "https" && p.cert && p.cert.notAfter < h.clock) {
+        return { exit: 60, err: ["curl: (60) SSL certificate problem: certificate has expired", "More details here: https://curl.se/docs/sslcerts.html", "", "curl failed to verify the legitimacy of the server and therefore could not", "establish a secure connection to it. To learn more about this situation and", "how to fix it, please visit the web page mentioned above."] };
+      }
       const res = p.http ? p.http(h, path, p) : { code: 200, body: ["ok"] };
       return { ...res, ip: r.ip, port, host };
     }
@@ -1818,9 +1865,10 @@
   // Ubuntu's command-not-found answer for tools that a package provides.
   L.notInstalled = (name) => {
     const h = L.current;
-    if (!h) return null;
+    if (!h || h.distro !== "ubuntu") return null;
     const pkg = Object.entries(h.pkgs.repo).find(([n, v]) => !h.pkgs.installed[n] && (v.bins || []).some((b) => basename(b) === name));
-    const extra = { dnf: "dnf", yum: "yum", ifconfig: "net-tools", netstat: "net-tools" }[name];
+    const extra = { dnf: "dnf", yum: "yum", ifconfig: "net-tools", netstat: "net-tools", rpm: "rpm", getenforce: "selinux-utils", sestatus: "policycoreutils",
+      "firewall-cmd": "firewalld", lvs: "lvm2", lvextend: "lvm2", xfs_growfs: "xfsprogs", smem: "smem" }[name];
     if (!pkg && !extra) return null;
     return [`Command '${name}' not found, but can be installed with:`, "", `sudo apt install ${pkg ? pkg[0] : extra}`];
   };
@@ -1869,7 +1917,7 @@
   // Run the jobs due in each minute that passed. Jobs run as their user, from
   // their home, with cron's own small environment.
   function cronTick(h, from, to) {
-    if (!isUp(h, "cron.service") || h.inCron) return;
+    if (!isUp(h, h.cronUnit) || h.inCron) return;
     const { jobs } = crontabs(h);
     h.inCron = true;
     for (let t = Math.floor(from / 60000) * 60000 + 60000; t <= to && t - from < 3700000; t += 60000) {
@@ -1879,7 +1927,7 @@
         if (!(cronField(mi, dt.getUTCMinutes(), 0, 59) && cronField(hr, dt.getUTCHours(), 0, 23) && cronField(dom, dt.getUTCDate(), 1, 31) && cronField(mon, dt.getUTCMonth() + 1, 1, 12) && cronField(dow, dt.getUTCDay(), 0, 6))) continue;
         const pid = h.nextPid++;
         const u = h.user(j.user);
-        h.log("CRON", `(${j.user}) CMD (${j.cmd})`, { pid, unit: "cron.service", t });
+        h.log(h.distro === "rhel" ? "CROND" : "CRON", `(${j.user}) CMD (${j.cmd})`, { pid, unit: h.cronUnit, t });
         const saved = h.clock;
         h.clock = t;
         const term = [];
@@ -1889,7 +1937,7 @@
         const printed = term.length || h.status !== 0;
         j.last = { t, ok: h.status === 0, out: term.map(([x]) => x) };
         h.cronRuns = (h.cronRuns || []).concat({ ...j.last, tag: j.tag, cmd: j.cmd, user: j.user });
-        if (printed && term.length) h.log("CRON", `(CRON) info (No MTA installed, discarding output)`, { pid, unit: "cron.service", t });
+        if (printed && term.length) h.log("CRON", `(CRON) info (No MTA installed, discarding output)`, { pid, unit: h.cronUnit, t });
       }
     }
     h.inCron = false;

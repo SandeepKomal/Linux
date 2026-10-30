@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="description" content="Learn Linux by fixing a broken server in your browser: 46 real incidents (disk full, permission denied, services that will not start, DNS, OOM, cron), a troubleshooting reference for every common error, a systemd unit X-ray, quizzes and a cheat sheet.">
+  <meta name="description" content="Learn Linux by fixing a broken server in your browser: 60 real incidents on Ubuntu and Rocky Linux (disk full, permission denied, services that will not start, DNS, SELinux, OOM, cron), a troubleshooting reference for every common error, a systemd unit X-ray, quizzes and a cheat sheet.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Linux Quest: learn Linux by fixing it">
   <meta property="og:description" content="Real Linux incidents to fix in your browser, and a reference answer for every common error message. Free, no account, nothing to install.">
@@ -69,7 +69,7 @@
           <div class="pg-head">
             <div>
               <h2 id="pg-title" class="section-title">Fix a broken server. Right here.</h2>
-              <p class="section-sub"><span id="pg-count">46</span> real incidents, real commands, the errors Linux really prints.</p>
+              <p class="section-sub"><span id="pg-count">60</span> real incidents, real commands, the errors Linux really prints.</p>
             </div>
             <p id="pg-goal" class="pg-goal" aria-live="polite"></p>
           </div>
@@ -77,7 +77,7 @@
           <div class="pg-scenarios" id="pg-scenarios" role="group" aria-label="Scenario"></div>
           <div class="pg-body">
             <div class="pg-term" id="pg-term">
-              <div class="pg-bar" aria-hidden="true"><span></span><span></span><span></span><em>ssh web-01</em></div>
+              <div class="pg-bar" aria-hidden="true"><span></span><span></span><span></span><em id="pg-host">ssh web-01</em></div>
               <div class="pg-out" id="pg-out" role="log" aria-live="polite" aria-label="Terminal output"></div>
               <form class="pg-form" id="pg-form" autocomplete="off">
                 <span id="pg-prompt" aria-hidden="true">$</span>
@@ -218,7 +218,9 @@
   <script src="app.js"></script>
   <script src="sim.js"></script>
   <script src="sim-ops.js"></script>
+  <script src="sim-admin.js"></script>
   <script src="world.js"></script>
+  <script src="rhel.js"></script>
   <script src="scenarios.js"></script>
   <script src="playground.js"></script>
   <script src="architecture.js"></script>

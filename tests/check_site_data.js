@@ -30,7 +30,7 @@ for (const s of [...new Set(Q.levels.map((l) => l.stage))]) {
 let total = 0;
 assert.deepStrictEqual(Object.keys(quiz).sort(), Q.levels.map((l) => l.id), "a quiz for every level and no other");
 for (const lv of Q.levels) {
-  assert.ok(quiz[lv.id].length >= 5, `level ${lv.id} needs at least 5 quiz questions`);
+  assert.ok(quiz[lv.id].length >= 6, `level ${lv.id} needs at least 6 quiz questions`);
   const seen = new Set();
   for (const item of quiz[lv.id]) {
     total++;
