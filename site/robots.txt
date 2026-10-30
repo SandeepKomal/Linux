@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sandeepkomal.github.io/Linux/sitemap.xml
