@@ -1,0 +1,1398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="Common Linux errors and how to fix them: Permission denied when running a script, bad interpreter: No such file or directory, Operation not permitted, even as root, EACCES: permission denied in a service's log, 403 Forbidden from nginx, 404 everywhere after a deploy: broken symlink, and 72 more, each with the cause, how to confirm it, the fix and how to prevent it.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Linux errors and how to fix them">
+  <meta property="og:description" content="78 common Linux error messages, each with the cause, how to confirm it, the fix and how to prevent it.">
+  <meta property="og:url" content="https://sandeepkomal.github.io/Linux/problems.html">
+  <link rel="canonical" href="https://sandeepkomal.github.io/Linux/problems.html">
+  <title>Linux errors and fixes</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <a class="brand" href="index.html"><img src="logo.svg" alt="" width="22" height="22"> Linux Quest</a>
+      <nav aria-label="Sections"><a href="index.html#path">Path</a><a href="index.html#doctor">Troubleshoot</a><a href="index.html#cheats">Cheat sheet</a></nav>
+    </div>
+  </header>
+  <main class="wrap problems">
+    <h1 class="big-title">Linux errors and how to fix them</h1>
+    <p class="lede">78 error messages and symptoms from real servers. Each answer gives the exact message, why it happens, how to confirm it, the fix, how to prevent it, and a scenario to practise it in the <a href="index.html#path">playground</a>. Generated from the site's data; the <a href="index.html#doctor">interactive reference</a> adds search by pasted error text.</p>
+    <nav class="card toc" aria-label="Problems">
+      <h2>Files and permissions</h2>
+      <ul><li><a href="#permission-denied-script">Permission denied when running a script</a></li><li><a href="#bad-interpreter">bad interpreter: No such file or directory</a></li><li><a href="#operation-not-permitted-root">Operation not permitted, even as root</a></li><li><a href="#eacces-service">EACCES: permission denied in a service's log</a></li><li><a href="#forbidden-403">403 Forbidden from nginx</a></li><li><a href="#broken-symlink">404 everywhere after a deploy: broken symlink</a></li><li><a href="#command-not-found">command not found (but it works for me)</a></li><li><a href="#argument-list-too-long">Argument list too long</a></li></ul>
+      <h2>Processes</h2>
+      <ul><li><a href="#high-cpu-load">High load average, CPU at 100%</a></li><li><a href="#kill-9-data-loss">Half-written file or stale lock after kill -9</a></li><li><a href="#zombie-defunct">Zombie &lt;defunct&gt; processes</a></li><li><a href="#already-running-pidfile">Already running (stale PID file)</a></li><li><a href="#killed-oom">Killed, with no error in the log</a></li></ul>
+      <h2>Services</h2>
+      <ul><li><a href="#status-203-exec">status=203/EXEC</a></li><li><a href="#unit-masked">Unit is masked</a></li><li><a href="#changed-on-disk">Unit file changed on disk</a></li><li><a href="#not-started-at-boot">Service missing after every reboot</a></li><li><a href="#systemctl-access-denied">Failed to restart: Access denied</a></li><li><a href="#start-limit-hit">Start request repeated too quickly</a></li><li><a href="#address-in-use">Address already in use</a></li><li><a href="#job-failed-control-process">Job failed because the control process exited with error code</a></li><li><a href="#econnrefused-at-boot">Connection refused only after a reboot</a></li><li><a href="#no-installation-config">The unit files have no installation config</a></li><li><a href="#cron-syntax-error">Cron ignores a file in /etc/cron.d</a></li><li><a href="#crontab-missing-newline">new crontab file is missing newline before EOF</a></li><li><a href="#role-does-not-exist">pg_dump: role &quot;root&quot; does not exist</a></li><li><a href="#env-not-set-in-service">Variable set in my shell, missing in the service</a></li></ul>
+      <h2>Disks</h2>
+      <ul><li><a href="#no-space-left">No space left on device</a></li><li><a href="#df-du-mismatch">df says full, du finds much less</a></li><li><a href="#inodes-exhausted">No space left, with space left (inodes)</a></li><li><a href="#read-only-file-system">Read-only file system</a></li><li><a href="#target-is-busy">umount: target is busy</a></li><li><a href="#e2fsck-mounted">e2fsck: Cannot continue, aborting</a></li><li><a href="#resize-nothing-to-do">resize2fs: Nothing to do!</a></li><li><a href="#emergency-mode">You are in emergency mode</a></li><li><a href="#cant-find-uuid">mount: can't find UUID</a></li><li><a href="#logrotate-insecure-permissions">logrotate: parent directory has insecure permissions</a></li><li><a href="#rotated-log-still-held">Space not freed after log rotation</a></li><li><a href="#journal-disk-usage">The journal is using gigabytes</a></li><li><a href="#stale-file-handle">Stale file handle</a></li></ul>
+      <h2>Networking</h2>
+      <ul><li><a href="#could-not-resolve">Temporary failure in name resolution</a></li><li><a href="#dig-vs-getent">dig shows the right address, the app uses another</a></li><li><a href="#network-unreachable">Network is unreachable</a></li><li><a href="#nexthop-invalid-gateway">Error: Nexthop has invalid gateway</a></li><li><a href="#connection-timed-out">Connection timed out</a></li><li><a href="#connection-refused">Connection refused</a></li><li><a href="#unable-to-resolve-host">sudo: unable to resolve host</a></li><li><a href="#cert-not-yet-valid">SSL certificate problem: certificate is not yet valid</a></li></ul>
+      <h2>Users and security</h2>
+      <ul><li><a href="#not-in-sudoers">is not in the sudoers file</a></li><li><a href="#sudo-not-allowed">Sorry, user is not allowed to execute</a></li><li><a href="#sudoers-parse-error">sudo: parse error in sudoers</a></li><li><a href="#unprotected-private-key">WARNING: UNPROTECTED PRIVATE KEY FILE!</a></li><li><a href="#permission-denied-publickey">Permission denied (publickey)</a></li><li><a href="#bad-ownership-or-modes">Authentication refused: bad ownership or modes</a></li><li><a href="#world-readable-secret">Secrets file readable by everyone</a></li><li><a href="#service-on-all-interfaces">Internal service listening on 0.0.0.0</a></li><li><a href="#usermod-lost-groups">A user lost their groups after usermod</a></li><li><a href="#ssh-brute-force">SSH brute force in auth.log</a></li><li><a href="#certificate-expired">SSL certificate problem: certificate has expired</a></li></ul>
+      <h2>Boot, kernel and packages</h2>
+      <ul><li><a href="#dpkg-lock">Could not get lock /var/lib/dpkg/lock-frontend</a></li><li><a href="#dpkg-interrupted">dpkg was interrupted</a></li><li><a href="#release-not-valid-yet">Release file is not valid yet</a></li><li><a href="#reboot-required">System restart required</a></li><li><a href="#ip-forward-off">Routing or NAT stops after a reboot</a></li></ul>
+      <h2>Rocky Linux and RHEL</h2>
+      <ul><li><a href="#dnf-no-match">dnf: Unable to find a match</a></li><li><a href="#selinux-avc-denied">SELinux denial: 403 with correct permissions</a></li><li><a href="#bind-permission-denied-selinux">bind() failed (13: Permission denied) on a custom port</a></li><li><a href="#firewalld-blocks">firewalld drops traffic to a new port</a></li><li><a href="#resize2fs-bad-magic">resize2fs: Bad magic number in super-block</a></li><li><a href="#lvextend-insufficient-space">lvextend: Insufficient free space</a></li></ul>
+      <h2>Performance</h2>
+      <ul><li><a href="#nfs-not-responding">High load, idle CPU: NFS server not responding</a></li><li><a href="#memory-leak">Memory that only grows</a></li><li><a href="#swapon-read-header">swapon: read swap header failed</a></li><li><a href="#swap-insecure-permissions">swapon: insecure permissions, 0600 suggested</a></li><li><a href="#high-load-iowait">High load, idle CPU (I/O wait)</a></li><li><a href="#swap-thrashing">Swap thrashing</a></li><li><a href="#status-9-kill">Main process exited, code=killed, status=9/KILL</a></li><li><a href="#too-many-open-files">Too many open files</a></li></ul>
+    </nav>
+    <h2 class="section-title">Files and permissions</h2>
+      <section class="card fix problem" id="permission-denied-script">
+        <p class="tag">Files and permissions</p>
+        <h3>Permission denied when running a script</h3>
+        <pre class="fix-error"><code>-bash: ./deploy.sh: Permission denied</code></pre>
+        <h4>What you see</h4>
+        <p>Running a script with ./name fails even though you own the file.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The file has no execute bit (<code>-rw-r--r--</code>)</li><li>The file system is mounted noexec (/tmp often is)</li><li>A directory on the path is not searchable for you</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l deploy.sh
+findmnt -no OPTIONS --target deploy.sh</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>chmod u+x deploy.sh   # or 755</li><li>bash deploy.sh   # runs it once without the bit</li></ul>
+        <h4>Prevent it</h4>
+        <p>Commit scripts with the bit set (<code>git update-index --chmod=+x</code>). Never use 777: it lets anyone rewrite what runs.</p>
+        <p class="note">Practise it: <a href="index.html#play/noexec">Permission denied on a script</a> · <a href="index.html#fix/permission-denied-script">Open in the interactive reference</a> · <a href="#permission-denied-script">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="bad-interpreter">
+        <p class="tag">Files and permissions</p>
+        <h3>bad interpreter: No such file or directory</h3>
+        <pre class="fix-error"><code>-bash: ./deploy.sh: /bin/bash^M: bad interpreter: No such file or directory</code></pre>
+        <h4>What you see</h4>
+        <p>A script fails with an interpreter error although /bin/bash exists.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Windows line endings (CRLF): the kernel looks for &quot;/bin/bash\r&quot;</li><li>The shebang names an interpreter that is not installed</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>file deploy.sh   # with CRLF line terminators
+head -1 deploy.sh | od -c | head -2</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sed -i 's/\r$//' deploy.sh</li><li>sudo apt install dos2unix &amp;&amp; dos2unix deploy.sh</li></ul>
+        <h4>Prevent it</h4>
+        <p>Add <code>*.sh text eol=lf</code> to .gitattributes, and set your editor to LF for scripts.</p>
+        <p class="note">Practise it: <a href="index.html#play/crlf">bad interpreter: ^M</a> · <a href="index.html#fix/bad-interpreter">Open in the interactive reference</a> · <a href="#bad-interpreter">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="operation-not-permitted-root">
+        <p class="tag">Files and permissions</p>
+        <h3>Operation not permitted, even as root</h3>
+        <pre class="fix-error"><code>sed: cannot rename /etc/nginx/conf.d/sedXk3pQa: Operation not permitted</code></pre>
+        <h4>What you see</h4>
+        <p>root cannot edit, delete or chmod a file.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The file has the immutable attribute (chattr +i)</li><li>The append-only attribute (chattr +a)</li><li>The file is on a read-only or special file system</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>lsattr /etc/nginx/conf.d/rate-limit.conf</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo chattr -i FILE, edit it, then sudo chattr +i FILE if the lock was intended</li></ul>
+        <h4>Prevent it</h4>
+        <p>Document every immutable file; config management should know about them.</p>
+        <p class="note">Practise it: <a href="index.html#play/immutable">Operation not permitted, even as root</a> · <a href="index.html#fix/operation-not-permitted-root">Open in the interactive reference</a> · <a href="#operation-not-permitted-root">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="eacces-service">
+        <p class="tag">Files and permissions</p>
+        <h3>EACCES: permission denied in a service's log</h3>
+        <pre class="fix-error"><code>Error: EACCES: permission denied, open '/srv/shop/uploads/receipt-8813.pdf'</code></pre>
+        <h4>What you see</h4>
+        <p>A service runs but cannot read or write a file or folder.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Files created by root with sudo (tar, cp, git pull) in the app's folders</li><li>A secret tightened to root-only that the service reads itself</li><li>The service runs as a different user than you think</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl show -p User shop
+ls -ld /srv/shop/uploads
+sudo -u shop test -w /srv/shop/uploads &amp;&amp; echo writable</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo chown -R shop:shop /srv/shop/uploads</li><li>sudo chown root:shop FILE &amp;&amp; sudo chmod 640 FILE   # for secrets</li></ul>
+        <h4>Prevent it</h4>
+        <p>Run deploy steps as the service user (<code>sudo -u shop ...</code>), not as root.</p>
+        <p class="note">Practise it: <a href="index.html#play/rootowned">Files owned by root after sudo</a> · <a href="index.html#play/secretperm">A world-readable secrets file</a> · <a href="index.html#fix/eacces-service">Open in the interactive reference</a> · <a href="#eacces-service">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="forbidden-403">
+        <p class="tag">Files and permissions</p>
+        <h3>403 Forbidden from nginx</h3>
+        <pre class="fix-error"><code>HTTP/1.1 403 Forbidden</code></pre>
+        <h4>What you see</h4>
+        <p>Some pages work; new ones return 403.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The file is not readable by www-data (mode 600)</li><li>A directory on the path is not searchable (no x)</li><li>A restrictive umask on the deploy user</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l /var/www/html
+namei -l /var/www/html/report.html
+sudo -u www-data cat /var/www/html/report.html</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>chmod 644 FILE (755 for folders)</li><li>Set umask 022 in the deploy user's profile</li></ul>
+        <h4>Prevent it</h4>
+        <p>Deploy with a known umask, and test a fresh page after each deploy.</p>
+        <p class="note">Practise it: <a href="index.html#play/umask">403 Forbidden after every deploy</a> · <a href="index.html#fix/forbidden-403">Open in the interactive reference</a> · <a href="#forbidden-403">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="broken-symlink">
+        <p class="tag">Files and permissions</p>
+        <h3>404 everywhere after a deploy: broken symlink</h3>
+        <pre class="fix-error"><code>current -&gt; /srv/www/releases/20261029-2 (missing)</code></pre>
+        <h4>What you see</h4>
+        <p>The web root is a symlink whose target was deleted.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A cleanup job removed the release the link points at</li><li>The deploy wrote a relative target that resolves somewhere else</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l /srv/www
+find /srv/www -xtype l
+readlink -f /srv/www/current</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>ln -sfn /srv/www/releases/NEW /srv/www/current</li></ul>
+        <h4>Prevent it</h4>
+        <p>Never delete the release the link points at; keep the last few releases.</p>
+        <p class="note">Practise it: <a href="index.html#play/symlink">Symlink broken after deploy</a> · <a href="index.html#fix/broken-symlink">Open in the interactive reference</a> · <a href="#broken-symlink">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="command-not-found">
+        <p class="tag">Files and permissions</p>
+        <h3>command not found (but it works for me)</h3>
+        <pre class="fix-error"><code>/bin/sh: 1: backup-uploads.sh: not found</code></pre>
+        <h4>What you see</h4>
+        <p>A command works in your shell, not in cron, sudo or a service.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A different PATH: cron uses /usr/bin:/bin; sudo uses secure_path</li><li>The tool is in /usr/local/bin or your home</li><li>The package is not installed</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>command -v backup-uploads.sh
+env -i PATH=/usr/bin:/bin /bin/sh -c 'backup-uploads.sh'</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Use absolute paths, or set PATH= at the top of the crontab</li><li>sudo apt install PACKAGE (Ubuntu says which one)</li></ul>
+        <h4>Prevent it</h4>
+        <p>Scripts for automation use absolute paths or set PATH themselves.</p>
+        <p class="note">Practise it: <a href="index.html#play/cronpath">Cron job that never works</a> · <a href="index.html#fix/command-not-found">Open in the interactive reference</a> · <a href="#command-not-found">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="argument-list-too-long">
+        <p class="tag">Files and permissions</p>
+        <h3>Argument list too long</h3>
+        <pre class="fix-error"><code>-bash: /usr/bin/rm: Argument list too long</code></pre>
+        <h4>What you see</h4>
+        <p>rm, cp or ls with a * fails in a folder with a huge number of files.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The glob expands to more arguments than the kernel accepts in one command line</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls /var/lib/php/sessions | wc -l</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>find /var/lib/php/sessions -type f -mmin +1440 -delete</li><li>find DIR -type f -print0 | xargs -0 rm</li></ul>
+        <h4>Prevent it</h4>
+        <p>Clean up with a scheduled find -delete; do not let one folder collect millions of files.</p>
+        <p class="note">Practise it: <a href="index.html#play/inodes">No space left, with space left</a> · <a href="index.html#fix/argument-list-too-long">Open in the interactive reference</a> · <a href="#argument-list-too-long">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Processes</h2>
+      <section class="card fix problem" id="high-cpu-load">
+        <p class="tag">Processes</p>
+        <h3>High load average, CPU at 100%</h3>
+        <pre class="fix-error"><code>load average: 2.02, 1.88, 1.53</code></pre>
+        <h4>What you see</h4>
+        <p>Everything is slow; top shows a process near 100% per core.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A runaway job or loop</li><li>Too many workers for the CPUs</li><li>Load also counts processes waiting on disk (see I/O wait)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>uptime &amp;&amp; nproc
+top   # press P
+ps aux --sort=-%cpu | head</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>kill PID (SIGTERM) for a stray job</li><li>Stop or limit the service: systemctl set-property NAME CPUQuota=50%</li></ul>
+        <h4>Prevent it</h4>
+        <p>Run batch work under limits (systemd-run -p CPUQuota=) or off-peak.</p>
+        <p class="note">Practise it: <a href="index.html#play/runaway">A process eating the CPU</a> · <a href="index.html#fix/high-cpu-load">Open in the interactive reference</a> · <a href="#high-cpu-load">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="kill-9-data-loss">
+        <p class="tag">Processes</p>
+        <h3>Half-written file or stale lock after kill -9</h3>
+        <pre class="fix-error"><code>export.csv.part left behind, batchd.lock still present</code></pre>
+        <h4>What you see</h4>
+        <p>After killing a process, its output is truncated and it will not start again.</p>
+        <h4>Why it happens</h4>
+        <ul><li>SIGKILL cannot be caught: no flush, no rename, no cleanup</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l /var/lib/batch
+cat /var/lib/batch/batchd.lock &amp;&amp; ps -p $(cat /var/lib/batch/batchd.lock)</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Next time: kill PID (TERM), wait, then -9 only if it ignores TERM</li><li>Remove the stale lock only after checking no process owns it</li></ul>
+        <h4>Prevent it</h4>
+        <p>Stop services with systemctl stop, which sends TERM and waits.</p>
+        <p class="note">Practise it: <a href="index.html#play/graceful">kill -9 or a clean stop</a> · <a href="index.html#fix/kill-9-data-loss">Open in the interactive reference</a> · <a href="#kill-9-data-loss">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="zombie-defunct">
+        <p class="tag">Processes</p>
+        <h3>Zombie &lt;defunct&gt; processes</h3>
+        <pre class="fix-error"><code>[convert] &lt;defunct&gt;</code></pre>
+        <h4>What you see</h4>
+        <p>ps shows processes in state Z that kill -9 cannot remove.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The parent never called wait() for its exited children</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ps -eo pid,ppid,stat,cmd | grep -w Z
+ps -fp PPID</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Restart or stop the parent: init then reaps the zombies</li><li>Fix the program to wait() (or ignore SIGCHLD)</li></ul>
+        <h4>Prevent it</h4>
+        <p>A few zombies are harmless; thousands exhaust PIDs. Alert on the count.</p>
+        <p class="note">Practise it: <a href="index.html#play/zombie">Zombies that will not die</a> · <a href="index.html#fix/zombie-defunct">Open in the interactive reference</a> · <a href="#zombie-defunct">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="already-running-pidfile">
+        <p class="tag">Processes</p>
+        <h3>Already running (stale PID file)</h3>
+        <pre class="fix-error"><code>reportd: another instance is running (pid 1187), exiting</code></pre>
+        <h4>What you see</h4>
+        <p>A daemon refuses to start after a crash or reboot.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The PID file survived; its number now belongs to another process</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>cat /run/reportd.pid
+ps -fp 1187</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Remove the stale PID file, then start the service. Do not kill the PID blindly.</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keep PID files in /run (cleared at boot) and let systemd track the main PID.</p>
+        <p class="note">Practise it: <a href="index.html#play/stalepid">Already running, but it is not</a> · <a href="index.html#fix/already-running-pidfile">Open in the interactive reference</a> · <a href="#already-running-pidfile">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="killed-oom">
+        <p class="tag">Processes</p>
+        <h3>Killed, with no error in the log</h3>
+        <pre class="fix-error"><code>Out of memory: Killed process 2759 (java) total-vm:5832104kB, anon-rss:3201552kB</code></pre>
+        <h4>What you see</h4>
+        <p>A process dies suddenly; the shell prints Killed or the service shows status=9/KILL.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The kernel's OOM killer ran out of memory and chose it</li><li>A cgroup MemoryMax= limit was hit</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo dmesg -T | grep -i -e 'out of memory' -e oom
+journalctl -u reports | grep -i oom
+free -h</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Size the heap or workers to the machine (e.g. -Xmx1g)</li><li>Add memory, or move one workload away</li></ul>
+        <h4>Prevent it</h4>
+        <p>Set MemoryMax= per service and alert on available memory, not on used.</p>
+        <p class="note">Practise it: <a href="index.html#play/oom">Killed by the OOM killer</a> · <a href="index.html#fix/killed-oom">Open in the interactive reference</a> · <a href="#killed-oom">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Services</h2>
+      <section class="card fix problem" id="status-203-exec">
+        <p class="tag">Services</p>
+        <h3>status=203/EXEC</h3>
+        <pre class="fix-error"><code>orders-api.service: Failed to locate executable /usr/local/bin/orders-api: No such file or directory</code></pre>
+        <h4>What you see</h4>
+        <p>A service fails immediately; status shows code=exited, status=203/EXEC.</p>
+        <h4>Why it happens</h4>
+        <ul><li>ExecStart points at a path that does not exist</li><li>The file is not executable, or has CRLF in its shebang</li><li>A relative path in ExecStart</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl status orders-api
+journalctl -u orders-api -n 10
+ls -l /opt/orders/bin</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Fix ExecStart (absolute path), then sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart orders-api</li></ul>
+        <h4>Prevent it</h4>
+        <p>Install binaries with the package that ships the unit; check with systemd-analyze verify.</p>
+        <p class="note">Practise it: <a href="index.html#play/badexec">status=203/EXEC</a> · <a href="index.html#fix/status-203-exec">Open in the interactive reference</a> · <a href="#status-203-exec">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="unit-masked">
+        <p class="tag">Services</p>
+        <h3>Unit is masked</h3>
+        <pre class="fix-error"><code>Failed to start nginx.service: Unit nginx.service is masked.</code></pre>
+        <h4>What you see</h4>
+        <p>A service cannot be started even by hand.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Someone ran systemctl mask, linking the unit to /dev/null</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l /etc/systemd/system/nginx.service
+systemctl is-enabled nginx</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo systemctl unmask nginx &amp;&amp; sudo systemctl enable --now nginx</li></ul>
+        <h4>Prevent it</h4>
+        <p>Prefer disable for maintenance; leave a note when you mask.</p>
+        <p class="note">Practise it: <a href="index.html#play/masked">Unit is masked</a> · <a href="index.html#fix/unit-masked">Open in the interactive reference</a> · <a href="#unit-masked">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="changed-on-disk">
+        <p class="tag">Services</p>
+        <h3>Unit file changed on disk</h3>
+        <pre class="fix-error"><code>Warning: The unit file, source configuration file or drop-ins of api.service changed on disk. Run 'systemctl daemon-reload' to reload units.</code></pre>
+        <h4>What you see</h4>
+        <p>You edited a unit and restarted, but nothing changed.</p>
+        <h4>Why it happens</h4>
+        <ul><li>systemd works from the copy it loaded at the last daemon-reload</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl show api -p Environment
+systemctl cat api</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart api</li></ul>
+        <h4>Prevent it</h4>
+        <p>Use systemctl edit (it reloads for you), or always daemon-reload after editing.</p>
+        <p class="note">Practise it: <a href="index.html#play/daemonreload">The unit change did not take</a> · <a href="index.html#play/badexec">status=203/EXEC</a> · <a href="index.html#fix/changed-on-disk">Open in the interactive reference</a> · <a href="#changed-on-disk">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="not-started-at-boot">
+        <p class="tag">Services</p>
+        <h3>Service missing after every reboot</h3>
+        <pre class="fix-error"><code>Loaded: loaded (/etc/systemd/system/metrics-agent.service; disabled; preset: enabled)</code></pre>
+        <h4>What you see</h4>
+        <p>A service works until the next reboot.</p>
+        <h4>Why it happens</h4>
+        <ul><li>It was started but never enabled</li><li>The unit has no [Install] section</li><li>Its dependency fails at boot</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl is-enabled metrics-agent
+journalctl -b -u metrics-agent</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo systemctl enable --now metrics-agent</li></ul>
+        <h4>Prevent it</h4>
+        <p>Reboot new servers once before production to prove they come back.</p>
+        <p class="note">Practise it: <a href="index.html#play/notenabled">Gone after every reboot</a> · <a href="index.html#play/bootorder">Fails only after a reboot</a> · <a href="index.html#fix/not-started-at-boot">Open in the interactive reference</a> · <a href="#not-started-at-boot">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="systemctl-access-denied">
+        <p class="tag">Services</p>
+        <h3>Failed to restart: Access denied</h3>
+        <pre class="fix-error"><code>Failed to restart ssh.service: Access denied</code></pre>
+        <h4>What you see</h4>
+        <p>systemctl start, stop or restart fails as a normal user.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Managing system services needs root (or a polkit rule)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>id
+sudo -l</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo systemctl restart ssh</li><li>For CI, a narrow sudoers rule for that exact command</li></ul>
+        <h4>Prevent it</h4>
+        <p>Grant exact commands in sudoers, not ALL.</p>
+        <p class="note">Practise it: <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a> · <a href="index.html#fix/systemctl-access-denied">Open in the interactive reference</a> · <a href="#systemctl-access-denied">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="start-limit-hit">
+        <p class="tag">Services</p>
+        <h3>Start request repeated too quickly</h3>
+        <pre class="fix-error"><code>billing.service: Start request repeated too quickly.</code></pre>
+        <h4>What you see</h4>
+        <p>systemd gave up restarting a crashing service; manual starts are refused.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The service crashed more than StartLimitBurst times within StartLimitIntervalSec</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl status billing   # Result: start-limit-hit
+journalctl -u billing -n 50   # the first error is the real one</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Fix the cause, then sudo systemctl reset-failed billing &amp;&amp; sudo systemctl start billing</li></ul>
+        <h4>Prevent it</h4>
+        <p>Validate config before deploying it; use RestartSec= so retries are spaced out.</p>
+        <p class="note">Practise it: <a href="index.html#play/restartlimit">Start request repeated too quickly</a> · <a href="index.html#fix/start-limit-hit">Open in the interactive reference</a> · <a href="#start-limit-hit">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="address-in-use">
+        <p class="tag">Services</p>
+        <h3>Address already in use</h3>
+        <pre class="fix-error"><code>nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)</code></pre>
+        <h4>What you see</h4>
+        <p>A server cannot start because its port is taken.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Another service (Apache, an old instance) owns the port</li><li>A second copy of the same service</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo ss -tlnp 'sport = :80'
+sudo lsof -i :80</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo systemctl disable --now apache2 (or apt remove it), then start nginx</li></ul>
+        <h4>Prevent it</h4>
+        <p>Watch what package installs pull in, and pin ports per service.</p>
+        <p class="note">Practise it: <a href="index.html#play/port">Address already in use</a> · <a href="index.html#fix/address-in-use">Open in the interactive reference</a> · <a href="#address-in-use">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="job-failed-control-process">
+        <p class="tag">Services</p>
+        <h3>Job failed because the control process exited with error code</h3>
+        <pre class="fix-error"><code>Job for nginx.service failed because the control process exited with error code.</code></pre>
+        <h4>What you see</h4>
+        <p>systemctl start fails for a forking service (nginx, apache, postgres).</p>
+        <h4>Why it happens</h4>
+        <ul><li>The pre-start check or the daemon itself exited with an error</li><li>Port in use, bad config, missing file or permission</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>journalctl -xeu nginx.service
+sudo nginx -t</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Fix what the journal names, then start again</li></ul>
+        <h4>Prevent it</h4>
+        <p>Test configs (nginx -t, apachectl configtest) before reload.</p>
+        <p class="note">Practise it: <a href="index.html#play/port">Address already in use</a> · <a href="index.html#fix/job-failed-control-process">Open in the interactive reference</a> · <a href="#job-failed-control-process">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="econnrefused-at-boot">
+        <p class="tag">Services</p>
+        <h3>Connection refused only after a reboot</h3>
+        <pre class="fix-error"><code>Error: connect ECONNREFUSED 127.0.0.1:5432</code></pre>
+        <h4>What you see</h4>
+        <p>A service fails at boot but starts fine by hand.</p>
+        <h4>Why it happens</h4>
+        <ul><li>It starts before the service it needs is ready: no After= ordering</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>journalctl -b -u inventory -u postgresql
+systemctl cat inventory | grep -E 'After|Wants|Requires'</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Drop-in: [Unit] After=postgresql.service Wants=postgresql.service; daemon-reload; reboot to test</li></ul>
+        <h4>Prevent it</h4>
+        <p>Declare every local dependency with After= plus Wants= or Requires=.</p>
+        <p class="note">Practise it: <a href="index.html#play/bootorder">Fails only after a reboot</a> · <a href="index.html#fix/econnrefused-at-boot">Open in the interactive reference</a> · <a href="#econnrefused-at-boot">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="no-installation-config">
+        <p class="tag">Services</p>
+        <h3>The unit files have no installation config</h3>
+        <pre class="fix-error"><code>The unit files have no installation config (WantedBy=, RequiredBy=, UpheldBy=,</code></pre>
+        <h4>What you see</h4>
+        <p>systemctl enable refuses a unit.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The unit has no [Install] section with WantedBy=</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl cat NAME</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Add [Install] WantedBy=multi-user.target, daemon-reload, enable</li></ul>
+        <h4>Prevent it</h4>
+        <p>Start unit files from a template that includes [Install].</p>
+        <p class="note">Practise it: <a href="index.html#play/notenabled">Gone after every reboot</a> · <a href="index.html#fix/no-installation-config">Open in the interactive reference</a> · <a href="#no-installation-config">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="cron-syntax-error">
+        <p class="tag">Services</p>
+        <h3>Cron ignores a file in /etc/cron.d</h3>
+        <pre class="fix-error"><code>(*system*db-backup) ERROR (Syntax error, this crontab file will be ignored)</code></pre>
+        <h4>What you see</h4>
+        <p>A system cron job never runs; syslog shows bad username.</p>
+        <h4>Why it happens</h4>
+        <ul><li>/etc/cron.d lines need a user field after the five time fields</li><li>A dot in the file name (cron skips it)</li><li>Wrong owner or a writable mode</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>grep cron /var/log/syslog | tail
+cat /etc/cron.d/db-backup</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>*/10 * * * * postgres pg_dump ...   # add the user</li></ul>
+        <h4>Prevent it</h4>
+        <p>Name cron.d files with letters, digits, - and _ only, and run each job as the user that owns the work.</p>
+        <p class="note">Practise it: <a href="index.html#play/cronuser">Cron job as the wrong user</a> · <a href="index.html#fix/cron-syntax-error">Open in the interactive reference</a> · <a href="#cron-syntax-error">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="crontab-missing-newline">
+        <p class="tag">Services</p>
+        <h3>new crontab file is missing newline before EOF</h3>
+        <pre class="fix-error"><code>new crontab file is missing newline before EOF, can't install.</code></pre>
+        <h4>What you see</h4>
+        <p>Installing a crontab from a file or pipe fails.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The last line has no newline (printf without \n)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>tail -c1 file | od -c</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>echo &gt;&gt; file, then crontab file</li></ul>
+        <h4>Prevent it</h4>
+        <p>Use echo or a here-document when generating crontabs.</p>
+        <p class="note">Practise it: <a href="index.html#play/cronpath">Cron job that never works</a> · <a href="index.html#fix/crontab-missing-newline">Open in the interactive reference</a> · <a href="#crontab-missing-newline">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="role-does-not-exist">
+        <p class="tag">Services</p>
+        <h3>pg_dump: role &quot;root&quot; does not exist</h3>
+        <pre class="fix-error"><code>pg_dump: error: connection to server on socket &quot;/var/run/postgresql/.s.PGSQL.5432&quot; failed: FATAL:  role &quot;root&quot; does not exist</code></pre>
+        <h4>What you see</h4>
+        <p>A database job fails when run by root or another Linux user.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Local PostgreSQL logins map the Linux user to a database role (peer auth)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo -u postgres psql -c '\du'</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Run the job as postgres: sudo -u postgres pg_dump ..., or user postgres in cron.d</li></ul>
+        <h4>Prevent it</h4>
+        <p>Give automation its own role and Linux user.</p>
+        <p class="note">Practise it: <a href="index.html#play/cronuser">Cron job as the wrong user</a> · <a href="index.html#fix/role-does-not-exist">Open in the interactive reference</a> · <a href="#role-does-not-exist">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="env-not-set-in-service">
+        <p class="tag">Services</p>
+        <h3>Variable set in my shell, missing in the service</h3>
+        <pre class="fix-error"><code>Error: DATABASE_URL is not set</code></pre>
+        <h4>What you see</h4>
+        <p>A program works when you run it, but not as a systemd service.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Services do not read ~/.bashrc, ~/.profile, your exports or /etc/environment</li><li>The variable is set for a different user</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl show reports-api -p Environment
+sudo cat /proc/$(pgrep -o reports)/environ | tr '\0' '\n'</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>A drop-in with Environment=NAME=value or EnvironmentFile=/etc/app/app.env, then daemon-reload and restart</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keep a service's configuration in its unit or an EnvironmentFile under /etc, never in a login shell.</p>
+        <p class="note">Practise it: <a href="index.html#play/envmissing">Works in my shell, not as a service</a> · <a href="index.html#fix/env-not-set-in-service">Open in the interactive reference</a> · <a href="#env-not-set-in-service">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Disks</h2>
+      <section class="card fix problem" id="no-space-left">
+        <p class="tag">Disks</p>
+        <h3>No space left on device</h3>
+        <pre class="fix-error"><code>touch: cannot touch '/tmp/x': No space left on device</code></pre>
+        <h4>What you see</h4>
+        <p>Writes fail: logs stop, uploads fail, services crash.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The file system is full (df -h)</li><li>Inodes are exhausted (df -i)</li><li>Deleted files still held open (lsof +L1)</li><li>Only root's 5% reserve is left</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>df -h
+df -i
+sudo du -xh --max-depth=1 / 2&gt;/dev/null | sort -h | tail
+sudo lsof +L1</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Delete or compress what you do not need, truncate runaway logs, restart processes holding deleted files</li></ul>
+        <h4>Prevent it</h4>
+        <p>Alert at 80%, rotate logs by size, keep data on its own volume.</p>
+        <p class="note">Practise it: <a href="index.html#play/deletedopen">Disk full, but du finds nothing</a> · <a href="index.html#play/runawaylog">A debug log filling the disk</a> · <a href="index.html#play/inodes">No space left, with space left</a> · <a href="index.html#fix/no-space-left">Open in the interactive reference</a> · <a href="#no-space-left">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="df-du-mismatch">
+        <p class="tag">Disks</p>
+        <h3>df says full, du finds much less</h3>
+        <pre class="fix-error"><code>/dev/nvme0n1p1   20G   20G     0 100% /</code></pre>
+        <h4>What you see</h4>
+        <p>du cannot find what fills the disk.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A deleted file still open by a process</li><li>Files hidden under a mount point</li><li>du without -x crossing into other mounts</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo lsof +L1
+sudo du -xsh /</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo systemctl restart SERVICE, or sudo truncate -s 0 /proc/PID/fd/N</li></ul>
+        <h4>Prevent it</h4>
+        <p>Use logrotate copytruncate (or a reopen signal); never rm a log a process writes.</p>
+        <p class="note">Practise it: <a href="index.html#play/deletedopen">Disk full, but du finds nothing</a> · <a href="index.html#play/runawaylog">A debug log filling the disk</a> · <a href="index.html#fix/df-du-mismatch">Open in the interactive reference</a> · <a href="#df-du-mismatch">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="inodes-exhausted">
+        <p class="tag">Disks</p>
+        <h3>No space left, with space left (inodes)</h3>
+        <pre class="fix-error"><code>/dev/nvme0n1p1 1310720 1310720       0  100% /</code></pre>
+        <h4>What you see</h4>
+        <p>df -h shows room, but nothing can be created.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Millions of tiny files: sessions, cache, mail queues</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>df -i
+sudo find / -xdev -type d -size +2M 2&gt;/dev/null</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo find DIR -type f -mmin +1440 -delete</li></ul>
+        <h4>Prevent it</h4>
+        <p>Schedule cleanup of session and cache folders; alert on inode use.</p>
+        <p class="note">Practise it: <a href="index.html#play/inodes">No space left, with space left</a> · <a href="index.html#fix/inodes-exhausted">Open in the interactive reference</a> · <a href="#inodes-exhausted">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="read-only-file-system">
+        <p class="tag">Disks</p>
+        <h3>Read-only file system</h3>
+        <pre class="fix-error"><code>touch: cannot touch '/data/x': Read-only file system</code></pre>
+        <h4>What you see</h4>
+        <p>Writes fail even as root.</p>
+        <h4>Why it happens</h4>
+        <ul><li>ext4 found an error and remounted with errors=remount-ro</li><li>The root file system in emergency mode</li><li>Mounted ro in fstab</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo dmesg | grep -i -e ext4 -e 'read-only'
+findmnt -no OPTIONS /data</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Stop writers, umount, fsck -y the device, mount again</li><li>In emergency mode: mount -o remount,rw /</li></ul>
+        <h4>Prevent it</h4>
+        <p>Watch dmesg and disk health; keep backups. Do not force rw on a damaged file system.</p>
+        <p class="note">Practise it: <a href="index.html#play/readonly">Read-only file system</a> · <a href="index.html#play/fstab">Emergency mode after an fstab change</a> · <a href="index.html#fix/read-only-file-system">Open in the interactive reference</a> · <a href="#read-only-file-system">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="target-is-busy">
+        <p class="tag">Disks</p>
+        <h3>umount: target is busy</h3>
+        <pre class="fix-error"><code>umount: /data: target is busy.</code></pre>
+        <h4>What you see</h4>
+        <p>A file system will not unmount.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A process has a file open or its working directory there</li><li>Your own shell is inside it</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo lsof +D /data
+sudo fuser -vm /data</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Stop the service, cd out, then umount</li></ul>
+        <h4>Prevent it</h4>
+        <p>RequiresMountsFor= in units makes the order explicit.</p>
+        <p class="note">Practise it: <a href="index.html#play/readonly">Read-only file system</a> · <a href="index.html#fix/target-is-busy">Open in the interactive reference</a> · <a href="#target-is-busy">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="e2fsck-mounted">
+        <p class="tag">Disks</p>
+        <h3>e2fsck: Cannot continue, aborting</h3>
+        <pre class="fix-error"><code>/dev/nvme1n1p1 is mounted.
+e2fsck: Cannot continue, aborting.</code></pre>
+        <h4>What you see</h4>
+        <p>fsck refuses to run.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Checking a mounted file system would corrupt it</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>findmnt /dev/nvme1n1p1</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Unmount first; for / use a rescue boot or fsck at boot</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keep data on separate volumes you can unmount.</p>
+        <p class="note">Practise it: <a href="index.html#play/readonly">Read-only file system</a> · <a href="index.html#fix/e2fsck-mounted">Open in the interactive reference</a> · <a href="#e2fsck-mounted">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="resize-nothing-to-do">
+        <p class="tag">Disks</p>
+        <h3>resize2fs: Nothing to do!</h3>
+        <pre class="fix-error"><code>The filesystem is already 5214459 (4k) blocks long.  Nothing to do!</code></pre>
+        <h4>What you see</h4>
+        <p>After growing a cloud volume, df still shows the old size.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The partition was not grown; the file system fills its partition already</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>lsblk</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo growpart /dev/nvme0n1 1 &amp;&amp; sudo resize2fs /dev/nvme0n1p1 (xfs_growfs / for XFS)</li></ul>
+        <h4>Prevent it</h4>
+        <p>Script the three steps: volume, partition, file system.</p>
+        <p class="note">Practise it: <a href="index.html#play/growfs">The disk grew, the filesystem did not</a> · <a href="index.html#fix/resize-nothing-to-do">Open in the interactive reference</a> · <a href="#resize-nothing-to-do">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="emergency-mode">
+        <p class="tag">Disks</p>
+        <h3>You are in emergency mode</h3>
+        <pre class="fix-error"><code>Dependency failed for local-fs.target - Local File Systems.</code></pre>
+        <h4>What you see</h4>
+        <p>After a reboot the server stops at an emergency shell.</p>
+        <h4>Why it happens</h4>
+        <ul><li>An fstab line for a disk that is missing or has a wrong UUID, without nofail</li><li>A file system that fails its check</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>journalctl -xb | grep -i -e failed -e 'timed out'
+blkid
+cat /etc/fstab</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>mount -o remount,rw /, fix fstab, systemctl daemon-reload, mount -a, then systemctl default</li></ul>
+        <h4>Prevent it</h4>
+        <p>Run mount -a after every fstab change; use nofail for non-critical disks.</p>
+        <p class="note">Practise it: <a href="index.html#play/fstab">Emergency mode after an fstab change</a> · <a href="index.html#fix/emergency-mode">Open in the interactive reference</a> · <a href="#emergency-mode">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="cant-find-uuid">
+        <p class="tag">Disks</p>
+        <h3>mount: can't find UUID</h3>
+        <pre class="fix-error"><code>mount: /data: can't find UUID=7c1e0b6a-90d1-4b8e-a3f5-2e64c2a71b9f.</code></pre>
+        <h4>What you see</h4>
+        <p>mount -a or the boot fails for one fstab line.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A typo in the UUID, or the disk was replaced</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo blkid
+lsblk -f</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Copy the UUID from blkid into /etc/fstab, then mount -a</li></ul>
+        <h4>Prevent it</h4>
+        <p>Paste UUIDs, never type them.</p>
+        <p class="note">Practise it: <a href="index.html#play/fstab">Emergency mode after an fstab change</a> · <a href="index.html#fix/cant-find-uuid">Open in the interactive reference</a> · <a href="#cant-find-uuid">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="logrotate-insecure-permissions">
+        <p class="tag">Disks</p>
+        <h3>logrotate: parent directory has insecure permissions</h3>
+        <pre class="fix-error"><code>error: skipping &quot;/var/log/orders/orders.log&quot; because parent directory has insecure permissions (It's world writable or writable by group which is not &quot;root&quot;) Set &quot;su&quot; directive in config file to tell logrotate which user/group should be used for rotation.</code></pre>
+        <h4>What you see</h4>
+        <p>Logs grow forever although a logrotate rule exists.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The log folder is writable by a non-root group or by everyone</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo logrotate -d /etc/logrotate.d/orders
+ls -ld /var/log/orders
+journalctl -u logrotate</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Add <code>su orders orders</code> to the rule, or chmod 755 the folder; then logrotate -f to test</li></ul>
+        <h4>Prevent it</h4>
+        <p>Run logrotate -d after every new rule.</p>
+        <p class="note">Practise it: <a href="index.html#play/logrotate">logrotate is not rotating</a> · <a href="index.html#fix/logrotate-insecure-permissions">Open in the interactive reference</a> · <a href="#logrotate-insecure-permissions">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="rotated-log-still-held">
+        <p class="tag">Disks</p>
+        <h3>Space not freed after log rotation</h3>
+        <pre class="fix-error"><code>orders    1204 orders    3w   REG    8,1 12025908019     0  131003 /var/log/orders/orders.log.1 (deleted)</code></pre>
+        <h4>What you see</h4>
+        <p>logrotate ran, but df shows no change, and the program writes to the old file.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The rule renames (create) while the program keeps the file open; compress then deletes it</li><li>No copytruncate and no postrotate reload</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo lsof +L1
+grep -E 'copytruncate|postrotate' /etc/logrotate.d/*</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Add copytruncate, or postrotate with the program's reload command; restart the program once to release the space</li></ul>
+        <h4>Prevent it</h4>
+        <p>For programs that cannot reopen logs, use copytruncate; better, log to the journal.</p>
+        <p class="note">Practise it: <a href="index.html#play/logrotate">logrotate is not rotating</a> · <a href="index.html#fix/rotated-log-still-held">Open in the interactive reference</a> · <a href="#rotated-log-still-held">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="journal-disk-usage">
+        <p class="tag">Disks</p>
+        <h3>The journal is using gigabytes</h3>
+        <pre class="fix-error"><code>Archived and active journals take up 9.2G in the file system.</code></pre>
+        <h4>What you see</h4>
+        <p>/var/log/journal is the biggest folder on a full disk.</p>
+        <h4>Why it happens</h4>
+        <ul><li>No SystemMaxUse= cap; the default allows up to 10% of the file system</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>journalctl --disk-usage
+sudo du -sh /var/log/journal</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo journalctl --vacuum-size=500M</li><li>SystemMaxUse=500M in /etc/systemd/journald.conf, then restart systemd-journald</li></ul>
+        <h4>Prevent it</h4>
+        <p>Cap the journal on every server image; ship logs off the box.</p>
+        <p class="note">Practise it: <a href="index.html#play/journalfull">The journal is eating the disk</a> · <a href="index.html#fix/journal-disk-usage">Open in the interactive reference</a> · <a href="#journal-disk-usage">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="stale-file-handle">
+        <p class="tag">Disks</p>
+        <h3>Stale file handle</h3>
+        <pre class="fix-error"><code>ls: cannot access '/mnt/shared': Stale file handle</code></pre>
+        <h4>What you see</h4>
+        <p>Everything under an NFS mount fails after server-side changes.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The export was restored, moved or recreated; the client's handles point at nothing</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>findmnt -t nfs4
+df -h 2&gt;&amp;1 | grep -i stale</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo umount -l /mnt/shared &amp;&amp; sudo mount /mnt/shared</li></ul>
+        <h4>Prevent it</h4>
+        <p>Coordinate NFS server changes with the clients; remount after restores.</p>
+        <p class="note">Practise it: <a href="index.html#play/nfsstale">Stale file handle</a> · <a href="index.html#fix/stale-file-handle">Open in the interactive reference</a> · <a href="#stale-file-handle">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Networking</h2>
+      <section class="card fix problem" id="could-not-resolve">
+        <p class="tag">Networking</p>
+        <h3>Temporary failure in name resolution</h3>
+        <pre class="fix-error"><code>curl: (6) Could not resolve host: api.payments.example</code></pre>
+        <h4>What you see</h4>
+        <p>Names fail while IP addresses work.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A wrong or unreachable nameserver in /etc/resolv.conf</li><li>systemd-resolved down or misconfigured</li><li>No route to the DNS server</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>cat /etc/resolv.conf
+dig example.com
+dig @10.0.0.2 example.com</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Point resolv.conf (or netplan nameservers) at a working resolver</li></ul>
+        <h4>Prevent it</h4>
+        <p>Manage DNS settings in one place (netplan, DHCP) and monitor resolution.</p>
+        <p class="note">Practise it: <a href="index.html#play/dns">Temporary failure in name resolution</a> · <a href="index.html#play/route">Network is unreachable</a> · <a href="index.html#fix/could-not-resolve">Open in the interactive reference</a> · <a href="#could-not-resolve">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="dig-vs-getent">
+        <p class="tag">Networking</p>
+        <h3>dig shows the right address, the app uses another</h3>
+        <pre class="fix-error"><code>Error: connect ETIMEDOUT 10.0.2.15:5432</code></pre>
+        <h4>What you see</h4>
+        <p>DNS has the new address but programs connect to the old one.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A stale line in /etc/hosts (read before DNS)</li><li>An application or JVM DNS cache</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>getent hosts db.internal
+dig +short db.internal
+grep db.internal /etc/hosts</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Remove the stale /etc/hosts line</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keep /etc/hosts minimal; use DNS with sensible TTLs.</p>
+        <p class="note">Practise it: <a href="index.html#play/hosts">dig is right, the app is wrong</a> · <a href="index.html#fix/dig-vs-getent">Open in the interactive reference</a> · <a href="#dig-vs-getent">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="network-unreachable">
+        <p class="tag">Networking</p>
+        <h3>Network is unreachable</h3>
+        <pre class="fix-error"><code>ping: connect: Network is unreachable</code></pre>
+        <h4>What you see</h4>
+        <p>Nothing outside the local subnet answers.</p>
+        <h4>Why it happens</h4>
+        <ul><li>No default route</li><li>The interface is down</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ip route
+ip -br a</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo ip route add default via 10.0.1.1 dev eth0 (persist in netplan)</li></ul>
+        <h4>Prevent it</h4>
+        <p>Change routes through netplan or DHCP, not by hand.</p>
+        <p class="note">Practise it: <a href="index.html#play/route">Network is unreachable</a> · <a href="index.html#fix/network-unreachable">Open in the interactive reference</a> · <a href="#network-unreachable">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="nexthop-invalid-gateway">
+        <p class="tag">Networking</p>
+        <h3>Error: Nexthop has invalid gateway</h3>
+        <pre class="fix-error"><code>Error: Nexthop has invalid gateway.</code></pre>
+        <h4>What you see</h4>
+        <p>ip route add refuses the gateway.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The gateway is not on any directly connected subnet</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ip -br a
+ip route</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Use the gateway inside your subnet (usually .1)</li></ul>
+        <h4>Prevent it</h4>
+        <p>Check the subnet before adding routes.</p>
+        <p class="note">Practise it: <a href="index.html#play/route">Network is unreachable</a> · <a href="index.html#fix/nexthop-invalid-gateway">Open in the interactive reference</a> · <a href="#nexthop-invalid-gateway">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="connection-timed-out">
+        <p class="tag">Networking</p>
+        <h3>Connection timed out</h3>
+        <pre class="fix-error"><code>curl: (28) Failed to connect to web-01 port 8080 after 134106 ms: Couldn't connect to server</code></pre>
+        <h4>What you see</h4>
+        <p>Connections hang and then fail; locally it works.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A firewall drops the packets (ufw, security group)</li><li>No route back</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo ufw status verbose
+sudo ss -tlnp
+curl -v localhost:8080</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo ufw allow from 10.0.1.0/24 to any port 8080</li></ul>
+        <h4>Prevent it</h4>
+        <p>Open ports in the same change that adds the service.</p>
+        <p class="note">Practise it: <a href="index.html#play/firewall">Works locally, not from the load balancer</a> · <a href="index.html#fix/connection-timed-out">Open in the interactive reference</a> · <a href="#connection-timed-out">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="connection-refused">
+        <p class="tag">Networking</p>
+        <h3>Connection refused</h3>
+        <pre class="fix-error"><code>curl: (7) Failed to connect to 10.0.1.10 port 8080 after 0 ms: Couldn't connect to server</code></pre>
+        <h4>What you see</h4>
+        <p>Connections fail immediately.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Nothing listens on that address and port</li><li>The service listens on 127.0.0.1 only</li><li>The service is down</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo ss -tlnp
+systemctl status SERVICE</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Start the service, or bind it to 0.0.0.0 (or the private IP) and restart</li></ul>
+        <h4>Prevent it</h4>
+        <p>Check the Local Address column after every deploy.</p>
+        <p class="note">Practise it: <a href="index.html#play/listenlocal">Listening on 127.0.0.1 only</a> · <a href="index.html#fix/connection-refused">Open in the interactive reference</a> · <a href="#connection-refused">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="unable-to-resolve-host">
+        <p class="tag">Networking</p>
+        <h3>sudo: unable to resolve host</h3>
+        <pre class="fix-error"><code>sudo: unable to resolve host web-02: Name or service not known</code></pre>
+        <h4>What you see</h4>
+        <p>Every sudo warns and waits after a rename.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The new hostname is not in /etc/hosts</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>hostname
+getent hosts $(hostname)</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo sed -i 's/old-name/new-name/' /etc/hosts</li></ul>
+        <h4>Prevent it</h4>
+        <p>Rename with a script that updates /etc/hostname and /etc/hosts together.</p>
+        <p class="note">Practise it: <a href="index.html#play/hostname">sudo: unable to resolve host</a> · <a href="index.html#fix/unable-to-resolve-host">Open in the interactive reference</a> · <a href="#unable-to-resolve-host">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="cert-not-yet-valid">
+        <p class="tag">Networking</p>
+        <h3>SSL certificate problem: certificate is not yet valid</h3>
+        <pre class="fix-error"><code>curl: (60) SSL certificate problem: certificate is not yet valid</code></pre>
+        <h4>What you see</h4>
+        <p>TLS fails everywhere at once.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The system clock is behind</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>date
+timedatectl</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo timedatectl set-ntp true</li></ul>
+        <h4>Prevent it</h4>
+        <p>Run an NTP client on every machine; alert on clock offset.</p>
+        <p class="note">Practise it: <a href="index.html#play/time">Certificate is not yet valid</a> · <a href="index.html#fix/cert-not-yet-valid">Open in the interactive reference</a> · <a href="#cert-not-yet-valid">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Users and security</h2>
+      <section class="card fix problem" id="not-in-sudoers">
+        <p class="tag">Users and security</p>
+        <h3>is not in the sudoers file</h3>
+        <pre class="fix-error"><code>alice is not in the sudoers file.</code></pre>
+        <h4>What you see</h4>
+        <p>A user cannot use sudo at all.</p>
+        <h4>Why it happens</h4>
+        <ul><li>No rule names the user or one of their groups (sudo, admin)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>groups alice
+sudo -l -U alice</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo usermod -aG sudo alice, or a narrow rule in /etc/sudoers.d via visudo</li></ul>
+        <h4>Prevent it</h4>
+        <p>Grant admin rights through a group, reviewed regularly.</p>
+        <p class="note">Practise it: <a href="index.html#play/groups">Added to a group, lost the others</a> · <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a> · <a href="index.html#fix/not-in-sudoers">Open in the interactive reference</a> · <a href="#not-in-sudoers">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="sudo-not-allowed">
+        <p class="tag">Users and security</p>
+        <h3>Sorry, user is not allowed to execute</h3>
+        <pre class="fix-error"><code>Sorry, user deploy is not allowed to execute '/usr/bin/systemctl restart orders' as root on web-01.</code></pre>
+        <h4>What you see</h4>
+        <p>sudo works for some commands and not this one.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The rule names a different command line (renamed unit, different path or arguments)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo -l -U deploy</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Update the rule to the exact command, check with visudo -c</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keep CI sudo rules in version control, next to the units they restart.</p>
+        <p class="note">Practise it: <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a> · <a href="index.html#fix/sudo-not-allowed">Open in the interactive reference</a> · <a href="#sudo-not-allowed">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="sudoers-parse-error">
+        <p class="tag">Users and security</p>
+        <h3>sudo: parse error in sudoers</h3>
+        <pre class="fix-error"><code>&gt;&gt;&gt; /etc/sudoers.d/deploy: syntax error near line 2 &lt;&lt;&lt;</code></pre>
+        <h4>What you see</h4>
+        <p>sudo is broken for everyone.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A syntax error in any sudoers file (missing colon after NOPASSWD, typo)</li><li>A sudoers file with the wrong mode or owner</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>visudo -c   # as root, or pkexec visudo -c</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Fix the file as root (console, rescue, pkexec), chmod 440, visudo -c</li></ul>
+        <h4>Prevent it</h4>
+        <p>Edit only with visudo -f; keep a root session open while testing.</p>
+        <p class="note">Practise it: <a href="index.html#play/sudoers">sudo: parse error in sudoers</a> · <a href="index.html#fix/sudoers-parse-error">Open in the interactive reference</a> · <a href="#sudoers-parse-error">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="unprotected-private-key">
+        <p class="tag">Users and security</p>
+        <h3>WARNING: UNPROTECTED PRIVATE KEY FILE!</h3>
+        <pre class="fix-error"><code>Permissions 0644 for '/home/ubuntu/.ssh/id_ed25519' are too open.</code></pre>
+        <h4>What you see</h4>
+        <p>ssh ignores your key.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The private key is readable by group or others</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l ~/.ssh</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>chmod 600 ~/.ssh/id_ed25519</li></ul>
+        <h4>Prevent it</h4>
+        <p>Copy keys with install -m 600, not cp.</p>
+        <p class="note">Practise it: <a href="index.html#play/sshkey">UNPROTECTED PRIVATE KEY FILE</a> · <a href="index.html#fix/unprotected-private-key">Open in the interactive reference</a> · <a href="#unprotected-private-key">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="permission-denied-publickey">
+        <p class="tag">Users and security</p>
+        <h3>Permission denied (publickey)</h3>
+        <pre class="fix-error"><code>deploy@db-01: Permission denied (publickey).</code></pre>
+        <h4>What you see</h4>
+        <p>Key-based login fails.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The client did not offer the key (wrong file, too-open mode)</li><li>The server rejected authorized_keys (StrictModes)</li><li>The key is not in authorized_keys</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ssh -v deploy@db-01
+sudo journalctl -u ssh -n 20   # on the server</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Fix modes on both ends: key 600, ~/.ssh 700, authorized_keys 600</li></ul>
+        <h4>Prevent it</h4>
+        <p>Distribute keys with configuration management.</p>
+        <p class="note">Practise it: <a href="index.html#play/sshkey">UNPROTECTED PRIVATE KEY FILE</a> · <a href="index.html#play/sshauth">Authentication refused: bad ownership or modes</a> · <a href="index.html#fix/permission-denied-publickey">Open in the interactive reference</a> · <a href="#permission-denied-publickey">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="bad-ownership-or-modes">
+        <p class="tag">Users and security</p>
+        <h3>Authentication refused: bad ownership or modes</h3>
+        <pre class="fix-error"><code>Authentication refused: bad ownership or modes for directory /home/deploy/.ssh</code></pre>
+        <h4>What you see</h4>
+        <p>The server log explains why a key was refused.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Home, ~/.ssh or authorized_keys is writable by group or others, or owned by someone else</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -ld /home/deploy /home/deploy/.ssh
+ls -l /home/deploy/.ssh</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>chmod 755 home (or 750), 700 ~/.ssh, 600 authorized_keys</li></ul>
+        <h4>Prevent it</h4>
+        <p>Never chmod -R a home folder.</p>
+        <p class="note">Practise it: <a href="index.html#play/sshauth">Authentication refused: bad ownership or modes</a> · <a href="index.html#fix/bad-ownership-or-modes">Open in the interactive reference</a> · <a href="#bad-ownership-or-modes">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="world-readable-secret">
+        <p class="tag">Users and security</p>
+        <h3>Secrets file readable by everyone</h3>
+        <pre class="fix-error"><code>-rw-r--r-- 1 root root /etc/payments/payments.env</code></pre>
+        <h4>What you see</h4>
+        <p>A scanner flags a credentials file with mode 644.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Created with the default umask</li><li>Copied without -m</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l /etc/payments/payments.env
+systemctl show -p User payments</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo chown root:payments FILE &amp;&amp; sudo chmod 640 FILE, then restart the service to prove it still reads it</li></ul>
+        <h4>Prevent it</h4>
+        <p>Install secrets with install -m 640 -o root -g SERVICE, or use a secrets manager.</p>
+        <p class="note">Practise it: <a href="index.html#play/secretperm">A world-readable secrets file</a> · <a href="index.html#fix/world-readable-secret">Open in the interactive reference</a> · <a href="#world-readable-secret">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="service-on-all-interfaces">
+        <p class="tag">Users and security</p>
+        <h3>Internal service listening on 0.0.0.0</h3>
+        <pre class="fix-error"><code>LISTEN 0 511 0.0.0.0:6379 0.0.0.0:*</code></pre>
+        <h4>What you see</h4>
+        <p>Redis, a database or an admin port answers from the network.</p>
+        <h4>Why it happens</h4>
+        <ul><li>bind 0.0.0.0 in its config</li><li>protected-mode or auth turned off</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo ss -tlnp</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Bind to 127.0.0.1 (or the private interface), require auth, restart</li></ul>
+        <h4>Prevent it</h4>
+        <p>Review ss -tlnp in every security check; keep a firewall as a second layer.</p>
+        <p class="note">Practise it: <a href="index.html#play/exposedport">Redis open to the network</a> · <a href="index.html#fix/service-on-all-interfaces">Open in the interactive reference</a> · <a href="#service-on-all-interfaces">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="usermod-lost-groups">
+        <p class="tag">Users and security</p>
+        <h3>A user lost their groups after usermod</h3>
+        <pre class="fix-error"><code>groups=1002(alice),1003(developers)</code></pre>
+        <h4>What you see</h4>
+        <p>After adding a group, other access (docker, sudo) is gone.</p>
+        <h4>Why it happens</h4>
+        <ul><li>usermod -G without -a replaces every supplementary group</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>id alice
+grep alice /etc/group</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo usermod -aG docker alice   # add back what was lost</li></ul>
+        <h4>Prevent it</h4>
+        <p>Always use usermod -aG (or gpasswd -a).</p>
+        <p class="note">Practise it: <a href="index.html#play/groups">Added to a group, lost the others</a> · <a href="index.html#fix/usermod-lost-groups">Open in the interactive reference</a> · <a href="#usermod-lost-groups">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="ssh-brute-force">
+        <p class="tag">Users and security</p>
+        <h3>SSH brute force in auth.log</h3>
+        <pre class="fix-error"><code>Failed password for invalid user admin from 203.0.113.77 port 51544 ssh2</code></pre>
+        <h4>What you see</h4>
+        <p>Thousands of failed logins from many addresses.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Password logins enabled on an internet-facing sshd</li><li>A drop-in in sshd_config.d overrides the main file (first value wins)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo sshd -T | grep -i passwordauthentication
+sudo grep -c 'Failed password' /var/log/auth.log</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>PasswordAuthentication no in the file sshd -T shows wins; sshd -t; systemctl reload ssh</li><li>sudo apt install fail2ban (sshd jail is on by default)</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keys only, no root login, fail2ban, and ideally SSH only from a VPN or bastion.</p>
+        <p class="note">Practise it: <a href="index.html#play/bruteforce">SSH brute force</a> · <a href="index.html#fix/ssh-brute-force">Open in the interactive reference</a> · <a href="#ssh-brute-force">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="certificate-expired">
+        <p class="tag">Users and security</p>
+        <h3>SSL certificate problem: certificate has expired</h3>
+        <pre class="fix-error"><code>curl: (60) SSL certificate problem: certificate has expired</code></pre>
+        <h4>What you see</h4>
+        <p>Browsers and clients reject your site.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Renewal stopped (timer disabled, renewal failing)</li><li>Renewed, but the server was not reloaded</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo openssl x509 -enddate -noout -in /etc/letsencrypt/live/shop.example/fullchain.pem
+sudo certbot certificates
+systemctl list-timers | grep certbot</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo certbot renew &amp;&amp; sudo systemctl reload nginx</li><li>sudo systemctl enable --now certbot.timer</li></ul>
+        <h4>Prevent it</h4>
+        <p>Monitor the expiry of what is served (openssl s_client), not just that renewal ran.</p>
+        <p class="note">Practise it: <a href="index.html#play/certexpired">certificate has expired</a> · <a href="index.html#fix/certificate-expired">Open in the interactive reference</a> · <a href="#certificate-expired">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Boot, kernel and packages</h2>
+      <section class="card fix problem" id="dpkg-lock">
+        <p class="tag">Boot, kernel and packages</p>
+        <h3>Could not get lock /var/lib/dpkg/lock-frontend</h3>
+        <pre class="fix-error"><code>E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 2810 (unattended-upgr)</code></pre>
+        <h4>What you see</h4>
+        <p>apt install or upgrade refuses to start.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Another apt or dpkg is running: often unattended-upgrades on a new server</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ps -fp 2810
+systemctl status unattended-upgrades</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Wait for it to finish; then retry. Never delete lock files.</li></ul>
+        <h4>Prevent it</h4>
+        <p>In automation, wait for the lock (apt-get -o DPkg::Lock::Timeout=300).</p>
+        <p class="note">Practise it: <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a> · <a href="index.html#fix/dpkg-lock">Open in the interactive reference</a> · <a href="#dpkg-lock">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="dpkg-interrupted">
+        <p class="tag">Boot, kernel and packages</p>
+        <h3>dpkg was interrupted</h3>
+        <pre class="fix-error"><code>E: dpkg was interrupted, you must manually run 'sudo dpkg --configure -a' to correct the problem.</code></pre>
+        <h4>What you see</h4>
+        <p>Every apt command fails after a killed or broken install.</p>
+        <h4>Why it happens</h4>
+        <ul><li>An install was killed, or lock files were removed</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo dpkg --audit</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo dpkg --configure -a, then sudo apt -f install</li></ul>
+        <h4>Prevent it</h4>
+        <p>Do not kill apt or delete its locks.</p>
+        <p class="note">Practise it: <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a> · <a href="index.html#fix/dpkg-interrupted">Open in the interactive reference</a> · <a href="#dpkg-interrupted">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="release-not-valid-yet">
+        <p class="tag">Boot, kernel and packages</p>
+        <h3>Release file is not valid yet</h3>
+        <pre class="fix-error"><code>E: Release file for http://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease is not valid yet (invalid for another 3d 2h 41min 7s). Updates for this repository will not be applied.</code></pre>
+        <h4>What you see</h4>
+        <p>apt update refuses every repository.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The system clock is in the past</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>timedatectl</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo timedatectl set-ntp true</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keep NTP on everywhere; snapshots restored to VMs often have old clocks.</p>
+        <p class="note">Practise it: <a href="index.html#play/time">Certificate is not yet valid</a> · <a href="index.html#fix/release-not-valid-yet">Open in the interactive reference</a> · <a href="#release-not-valid-yet">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="reboot-required">
+        <p class="tag">Boot, kernel and packages</p>
+        <h3>System restart required</h3>
+        <pre class="fix-error"><code>*** System restart required ***</code></pre>
+        <h4>What you see</h4>
+        <p>Patched, but scanners still report the old kernel.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A kernel or libc update only applies after a reboot</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>uname -r
+cat /run/reboot-required.pkgs</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Reboot in a window; check systemctl --failed afterwards</li></ul>
+        <h4>Prevent it</h4>
+        <p>Schedule reboots (or livepatch) as part of patching.</p>
+        <p class="note">Practise it: <a href="index.html#play/rebootrequired">Patched, but still vulnerable</a> · <a href="index.html#fix/reboot-required">Open in the interactive reference</a> · <a href="#reboot-required">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="ip-forward-off">
+        <p class="tag">Boot, kernel and packages</p>
+        <h3>Routing or NAT stops after a reboot</h3>
+        <pre class="fix-error"><code>net.ipv4.ip_forward = 0</code></pre>
+        <h4>What you see</h4>
+        <p>A gateway, VPN or container host stops forwarding after reboot.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The setting was changed with sysctl -w and never persisted</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sysctl net.ipv4.ip_forward
+grep -r ip_forward /etc/sysctl.conf /etc/sysctl.d</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>echo 'net.ipv4.ip_forward=1' | sudo tee /etc/sysctl.d/99-forward.conf &amp;&amp; sudo sysctl --system</li></ul>
+        <h4>Prevent it</h4>
+        <p>Persist every kernel setting in /etc/sysctl.d, and reboot-test.</p>
+        <p class="note">Practise it: <a href="index.html#play/ipforward">The NAT gateway stopped routing</a> · <a href="index.html#fix/ip-forward-off">Open in the interactive reference</a> · <a href="#ip-forward-off">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Rocky Linux and RHEL</h2>
+      <section class="card fix problem" id="dnf-no-match">
+        <p class="tag">Rocky Linux and RHEL</p>
+        <h3>dnf: Unable to find a match</h3>
+        <pre class="fix-error"><code>Error: Unable to find a match: htop</code></pre>
+        <h4>What you see</h4>
+        <p>dnf cannot find a common tool.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The package lives in EPEL, which is not enabled</li><li>A typo, or a package name that differs from Debian's</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>dnf repolist
+dnf search htop
+dnf provides '*/htop'</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo dnf install -y epel-release, then install again</li></ul>
+        <h4>Prevent it</h4>
+        <p>Enable the repositories you rely on in the server image.</p>
+        <p class="note">Practise it: <a href="index.html#play/dnfepel">dnf: Unable to find a match</a> · <a href="index.html#fix/dnf-no-match">Open in the interactive reference</a> · <a href="#dnf-no-match">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="selinux-avc-denied">
+        <p class="tag">Rocky Linux and RHEL</p>
+        <h3>SELinux denial: 403 with correct permissions</h3>
+        <pre class="fix-error"><code>avc:  denied  { read } for  pid=1312 comm=&quot;nginx&quot; name=&quot;index.html&quot; scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=0</code></pre>
+        <h4>What you see</h4>
+        <p>Permission denied or 403 although modes and owners are right.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Files carry the wrong SELinux label (mv keeps the old one)</li><li>A path outside the policy's defaults (/srv, /data)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>getenforce
+ls -Z /srv/shop
+sudo ausearch -m avc -ts recent</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo semanage fcontext -a -t httpd_sys_content_t '/srv/shop(/.*)?' &amp;&amp; sudo restorecon -Rv /srv/shop</li></ul>
+        <h4>Prevent it</h4>
+        <p>Never setenforce 0 as a fix; use cp (not mv) into labelled places, or define fcontext rules for custom paths.</p>
+        <p class="note">Practise it: <a href="index.html#play/selinux">403 with correct permissions: SELinux</a> · <a href="index.html#fix/selinux-avc-denied">Open in the interactive reference</a> · <a href="#selinux-avc-denied">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="bind-permission-denied-selinux">
+        <p class="tag">Rocky Linux and RHEL</p>
+        <h3>bind() failed (13: Permission denied) on a custom port</h3>
+        <pre class="fix-error"><code>nginx: [emerg] bind() to 0.0.0.0:8090 failed (13: Permission denied)</code></pre>
+        <h4>What you see</h4>
+        <p>A service running as root cannot listen on a port.</p>
+        <h4>Why it happens</h4>
+        <ul><li>SELinux allows httpd_t to bind only http_port_t ports</li><li>Ports below 1024 for non-root users</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo ausearch -m avc -ts recent
+sudo semanage port -l | grep http_port_t</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo semanage port -a -t http_port_t -p tcp 8090</li></ul>
+        <h4>Prevent it</h4>
+        <p>Include port labels in provisioning when you use non-standard ports.</p>
+        <p class="note">Practise it: <a href="index.html#play/selinuxport">bind() failed (13: Permission denied)</a> · <a href="index.html#fix/bind-permission-denied-selinux">Open in the interactive reference</a> · <a href="#bind-permission-denied-selinux">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="firewalld-blocks">
+        <p class="tag">Rocky Linux and RHEL</p>
+        <h3>firewalld drops traffic to a new port</h3>
+        <pre class="fix-error"><code>curl: (28) Failed to connect to app-01 port 8080 after 134106 ms: Couldn't connect to server</code></pre>
+        <h4>What you see</h4>
+        <p>A service works locally but times out from other hosts on RHEL.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The port is not open in the public zone</li><li>Opened at runtime only, lost after --reload or reboot</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo firewall-cmd --list-all
+sudo firewall-cmd --permanent --list-ports</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo firewall-cmd --permanent --add-port=8080/tcp &amp;&amp; sudo firewall-cmd --reload</li></ul>
+        <h4>Prevent it</h4>
+        <p>Always use --permanent plus --reload (or --runtime-to-permanent).</p>
+        <p class="note">Practise it: <a href="index.html#play/firewalld">firewalld blocks the new port</a> · <a href="index.html#fix/firewalld-blocks">Open in the interactive reference</a> · <a href="#firewalld-blocks">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="resize2fs-bad-magic">
+        <p class="tag">Rocky Linux and RHEL</p>
+        <h3>resize2fs: Bad magic number in super-block</h3>
+        <pre class="fix-error"><code>resize2fs: Bad magic number in super-block while trying to open /dev/mapper/rl-root</code></pre>
+        <h4>What you see</h4>
+        <p>Growing / after lvextend fails.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The file system is XFS, not ext4</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>df -hT /
+lsblk -f</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo xfs_growfs /   # or lvextend -r next time</li></ul>
+        <h4>Prevent it</h4>
+        <p>Use lvextend -r, which picks the right tool for the file system.</p>
+        <p class="note">Practise it: <a href="index.html#play/lvm">Grow / on LVM and XFS</a> · <a href="index.html#fix/resize2fs-bad-magic">Open in the interactive reference</a> · <a href="#resize2fs-bad-magic">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="lvextend-insufficient-space">
+        <p class="tag">Rocky Linux and RHEL</p>
+        <h3>lvextend: Insufficient free space</h3>
+        <pre class="fix-error"><code>Insufficient free space: 10240 extents needed, but only 7423 available</code></pre>
+        <h4>What you see</h4>
+        <p>lvextend refuses the size you asked for.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The volume group has less free space than requested</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo vgs
+sudo pvs</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Ask for less (-l +100%FREE), or add a disk: pvcreate, vgextend, then lvextend -r</li></ul>
+        <h4>Prevent it</h4>
+        <p>Watch VFree; plan growth per volume.</p>
+        <p class="note">Practise it: <a href="index.html#play/lvm">Grow / on LVM and XFS</a> · <a href="index.html#fix/lvextend-insufficient-space">Open in the interactive reference</a> · <a href="#lvextend-insufficient-space">Link to this answer</a></p>
+      </section>
+    <h2 class="section-title">Performance</h2>
+      <section class="card fix problem" id="nfs-not-responding">
+        <p class="tag">Performance</p>
+        <h3>High load, idle CPU: NFS server not responding</h3>
+        <pre class="fix-error"><code>nfs: server nfs-02 not responding, still trying</code></pre>
+        <h4>What you see</h4>
+        <p>Load climbs, CPUs idle, df and ls hang, kill -9 does nothing.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A hard NFS mount whose server is down: processes wait in D state forever</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ps -eo pid,stat,cmd | grep ' D'
+sudo dmesg | grep -i nfs
+df -hl   # skips network mounts</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo umount -f -l /mnt/reports, then fix or remove its fstab line</li></ul>
+        <h4>Prevent it</h4>
+        <p>Mount non-essential shares with _netdev,nofail and x-systemd.automount; use df -l in scripts and monitoring.</p>
+        <p class="note">Practise it: <a href="index.html#play/nfshang">High load, idle CPU: a hung NFS mount</a> · <a href="index.html#fix/nfs-not-responding">Open in the interactive reference</a> · <a href="#nfs-not-responding">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="memory-leak">
+        <p class="tag">Performance</p>
+        <h3>Memory that only grows</h3>
+        <pre class="fix-error"><code>queue-worker   2.40G RSS, +120 MB/min</code></pre>
+        <h4>What you see</h4>
+        <p>One process's RSS climbs steadily until swap or the OOM killer.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A leak in the program</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ps aux --sort=-rss | head
+ps -o pid,rss,etime,cmd -p PID; sleep 60; run it again
+smem -k -r | head</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Contain it: systemctl set-property NAME MemoryMax=1G with Restart=always; report the leak with the numbers</li></ul>
+        <h4>Prevent it</h4>
+        <p>MemoryMax= on every service; alert on RSS growth, not only on free memory.</p>
+        <p class="note">Practise it: <a href="index.html#play/memleak">A slow memory leak</a> · <a href="index.html#fix/memory-leak">Open in the interactive reference</a> · <a href="#memory-leak">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="swapon-read-header">
+        <p class="tag">Performance</p>
+        <h3>swapon: read swap header failed</h3>
+        <pre class="fix-error"><code>swapon: /swapfile: read swap header failed</code></pre>
+        <h4>What you see</h4>
+        <p>A new swap file will not activate.</p>
+        <h4>Why it happens</h4>
+        <ul><li>mkswap was not run on the file</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>file /swapfile
+ls -l /swapfile</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo chmod 600 /swapfile &amp;&amp; sudo mkswap /swapfile &amp;&amp; sudo swapon /swapfile, then a line in /etc/fstab</li></ul>
+        <h4>Prevent it</h4>
+        <p>Script swap creation: fallocate, chmod 600, mkswap, swapon, fstab.</p>
+        <p class="note">Practise it: <a href="index.html#play/swapfile">No swap, and memory is tight</a> · <a href="index.html#fix/swapon-read-header">Open in the interactive reference</a> · <a href="#swapon-read-header">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="swap-insecure-permissions">
+        <p class="tag">Performance</p>
+        <h3>swapon: insecure permissions, 0600 suggested</h3>
+        <pre class="fix-error"><code>swapon: /swapfile: insecure permissions 0644, 0600 suggested.</code></pre>
+        <h4>What you see</h4>
+        <p>Swap works but warns.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The swap file is readable by others; it holds memory contents, secrets included</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ls -l /swapfile</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo chmod 600 /swapfile</li></ul>
+        <h4>Prevent it</h4>
+        <p>chmod 600 before mkswap.</p>
+        <p class="note">Practise it: <a href="index.html#play/swapfile">No swap, and memory is tight</a> · <a href="index.html#fix/swap-insecure-permissions">Open in the interactive reference</a> · <a href="#swap-insecure-permissions">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="high-load-iowait">
+        <p class="tag">Performance</p>
+        <h3>High load, idle CPU (I/O wait)</h3>
+        <pre class="fix-error"><code>%Cpu(s):  5.6 us,  1.4 sy,  0.0 ni,  0.0 id, 81.0 wa</code></pre>
+        <h4>What you see</h4>
+        <p>Load is high, CPUs idle, everything slow.</p>
+        <h4>Why it happens</h4>
+        <ul><li>Processes in D state wait on a saturated disk (backup, rsync, updatedb)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>top   # wa
+vmstat 1 5   # b column
+sudo iotop -o
+ps -eo pid,stat,cmd | grep ' D'</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo ionice -c3 -p PID for the I/O hog, or reschedule it</li></ul>
+        <h4>Prevent it</h4>
+        <p>Run backups with ionice -c3 nice -n19, off-peak, or on a separate disk.</p>
+        <p class="note">Practise it: <a href="index.html#play/iowait">High load, idle CPU</a> · <a href="index.html#fix/high-load-iowait">Open in the interactive reference</a> · <a href="#high-load-iowait">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="swap-thrashing">
+        <p class="tag">Performance</p>
+        <h3>Swap thrashing</h3>
+        <pre class="fix-error"><code>si 1840  so 2210</code></pre>
+        <h4>What you see</h4>
+        <p>Everything, even ssh, is very slow; disk busy.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The working set does not fit in RAM</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>free -h
+vmstat 1 5
+top -o %MEM</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Cap the hog: sudo systemctl set-property NAME MemoryMax=1G, or stop it</li></ul>
+        <h4>Prevent it</h4>
+        <p>Set MemoryMax= per service; alert on swap-in rate.</p>
+        <p class="note">Practise it: <a href="index.html#play/swap">Swap thrashing</a> · <a href="index.html#fix/swap-thrashing">Open in the interactive reference</a> · <a href="#swap-thrashing">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="status-9-kill">
+        <p class="tag">Performance</p>
+        <h3>Main process exited, code=killed, status=9/KILL</h3>
+        <pre class="fix-error"><code>reports.service: Failed with result 'oom-kill'.</code></pre>
+        <h4>What you see</h4>
+        <p>A service is killed and restarted again and again.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The OOM killer, a MemoryMax= limit, or someone's kill -9</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>journalctl -u reports | grep -i -e oom -e kill
+sudo dmesg | grep -i oom</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Fit the service to memory (heap, workers), or give it more</li></ul>
+        <h4>Prevent it</h4>
+        <p>Never protect one service with oom_score_adj at the cost of the database.</p>
+        <p class="note">Practise it: <a href="index.html#play/oom">Killed by the OOM killer</a> · <a href="index.html#fix/status-9-kill">Open in the interactive reference</a> · <a href="#status-9-kill">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="too-many-open-files">
+        <p class="tag">Performance</p>
+        <h3>Too many open files</h3>
+        <pre class="fix-error"><code>accept4() failed (24: Too many open files)</code></pre>
+        <h4>What you see</h4>
+        <p>A busy service refuses connections or cannot open files.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The service's open-files limit (1024 by default)</li><li>A file descriptor leak</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>cat /proc/$(pgrep -o gateway)/limits | grep 'open files'
+ls /proc/$(pgrep -o gateway)/fd | wc -l</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Drop-in [Service] LimitNOFILE=65535, daemon-reload, restart</li></ul>
+        <h4>Prevent it</h4>
+        <p>limits.conf does not apply to services: set LimitNOFILE= in the unit.</p>
+        <p class="note">Practise it: <a href="index.html#play/ulimit">Too many open files</a> · <a href="index.html#fix/too-many-open-files">Open in the interactive reference</a> · <a href="#too-many-open-files">Link to this answer</a></p>
+      </section>
+  </main>
+  <footer class="foot">
+    <div class="wrap foot-base">
+      <p>© 2024–2026 Sandeep Komal Pothu and contributors. Open source under the MIT License. No trackers, no cookies.</p>
+      <p class="foot-tm">Linux® is the registered trademark of Linus Torvalds in the U.S. and other countries. This project is independent and not affiliated with the Linux Foundation.</p>
+    </div>
+  </footer>
+</body>
+</html>

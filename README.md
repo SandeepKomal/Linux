@@ -13,6 +13,29 @@ A practical Linux reference for **DevOps engineers, cloud engineers, SREs, syste
 - Shell operators
 - DevOps troubleshooting workflows
 
+## Linux Quest: learn by fixing a server
+
+**[Open Linux Quest](https://sandeepkomal.github.io/Linux/)**, a free site that runs in your browser, with nothing to install and no account:
+
+- **Playground**: simulated Ubuntu 24.04 and Rocky Linux 9 servers with 60 real incidents to fix (permission denied, disk full but du finds nothing, services that will not start, DNS, firewalls, SELinux, LVM, NFS, sudoers, emergency mode, OOM kills, cron jobs that never run). Real commands, real error messages, three hints each.
+- **Path**: 17 levels from your first `ls` to incident response, each with a lab for a real machine.
+- **Troubleshoot**: paste an error message and get the cause, how to confirm it, the fix and how to prevent it. Also as plain HTML: [problems.html](https://sandeepkomal.github.io/Linux/problems.html).
+- **Unit file X-ray**: paste a systemd unit or a crontab to see every line explained and the risky ones flagged.
+- **Quiz**, **cheat sheet** and an interactive **Linux architecture** diagram.
+
+The site lives in [`site/`](./site) (static files, no dependencies, no trackers). Run it locally with `cd site && python3 -m http.server`, then open http://localhost:8000.
+
+Tests (Node.js, no packages):
+
+```bash
+node tests/check_site_data.js     # levels, quiz, references, page security rules
+node tests/check_playground.js    # every scenario starts broken, wrong moves fail, the fix works
+node tests/fuzz_playground.js     # thousands of random commands, no exceptions
+node tests/check_xray.js          # unit file and crontab explainer
+node scripts/build-problems.js    # regenerate site/problems.html and sitemap.xml after editing site/data.js
+node tests/check_problems.js      # fails if they are out of date
+```
+
 ## Quick start
 Start with the main reference:
 
@@ -53,7 +76,10 @@ Linux basics
 - Engineers preparing for Linux/DevOps interviews
 
 ## Contributing
-Corrections, useful commands, troubleshooting examples, shell scripts, and practical guides are welcome.
+Corrections, useful commands, troubleshooting examples, shell scripts, and practical guides are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md), including how to add a playground scenario.
+
+## License
+MIT. See [LICENSE](./LICENSE). Linux® is the registered trademark of Linus Torvalds in the U.S. and other countries. This project is independent and not affiliated with the Linux Foundation.
 
 ## Security
 Never commit passwords, private keys, API tokens, kubeconfigs, or production configuration.
