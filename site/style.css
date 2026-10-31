@@ -668,3 +668,20 @@ main:has(.pg-scenarios:empty) #pg-out:empty { background-image: repeating-linear
 .eyebrow-cmd span { color: #f2b33d; }
 .eyebrow:has(.eyebrow-cmd) { display: block; }
 .eyebrow-cmd { display: inline-block; margin-right: 8px; vertical-align: .12em; }
+
+/* A short light in the track colour travels round the edge of the home cards, each at its own point.
+   On white it uses a deeper shade so it still shows; in dark mode the bright track colour. */
+:root { --accent-edge: #c38004; }
+@media (prefers-color-scheme: dark) { :root { --accent-edge: var(--accent-fill); } }
+@property --edge { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.door, .tile, .stage-card { position: relative; }
+.door::before, .tile::before, .stage-card::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 2px; pointer-events: none;
+  background: conic-gradient(from var(--edge), transparent 0 74%, color-mix(in srgb, var(--accent-edge) 35%, transparent) 86%, var(--accent-edge) 96%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: edge 7s linear infinite; animation-delay: calc(var(--i, 0) * -1.3s); }
+@keyframes edge { to { --edge: 360deg; } }
+:is(.door, .tile, .stage-card):nth-child(2) { --i: 1; } :is(.door, .tile, .stage-card):nth-child(3) { --i: 2; }
+:is(.door, .tile, .stage-card):nth-child(4) { --i: 3; } :is(.door, .tile, .stage-card):nth-child(5) { --i: 4; }
+:is(.door, .tile, .stage-card):nth-child(6) { --i: 5; } :is(.door, .tile, .stage-card):nth-child(7) { --i: 6; }
+@media (prefers-reduced-motion: reduce) { .door::before, .tile::before, .stage-card::before { display: none; } }
