@@ -6,21 +6,22 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="description" content="Learn Linux by fixing a broken server in your browser: 60 real incidents on Ubuntu and Rocky Linux (disk full, permission denied, services that will not start, DNS, SELinux, OOM, cron), a troubleshooting reference for every common error, a systemd unit X-ray, quizzes and a cheat sheet.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Linux Quest: learn Linux by fixing it">
+  <meta property="og:site_name" content="DevOps Nimbus">
+  <meta property="og:title" content="Linux, zero to on-call · DevOps Nimbus">
   <meta property="og:description" content="Real Linux incidents to fix in your browser, and a reference answer for every common error message. Free, no account, nothing to install.">
   <meta property="og:url" content="https://sandeepkomal.github.io/Linux/">
   <link rel="canonical" href="https://sandeepkomal.github.io/Linux/">
-  <title>Linux Quest</title>
+  <title>Linux · DevOps Nimbus</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="top">
     <div class="wrap top-inner">
-      <a class="brand" href="#path" aria-label="Linux Quest home">
-        <img src="logo.svg" alt="" width="22" height="22">
-        Linux Quest
+      <a class="brand" href="#path" aria-label="DevOps Nimbus Linux, home">
+        <img class="mark" src="nimbus.svg" alt="" width="37" height="22">
+        DevOps Nimbus <span class="brand-track">Linux</span>
       </a>
       <nav aria-label="Sections">
         <div class="mode learn" role="group" aria-label="Learn">
@@ -37,7 +38,6 @@
         </div>
       </nav>
       <button type="button" class="kbd-btn" id="palette-open" aria-label="Search the site (Ctrl+K)"><span>Search</span><kbd id="palette-key">Ctrl K</kbd></button>
-      <a class="gh" id="gh-link" href="#">GitHub</a>
     </div>
   </header>
 
@@ -46,7 +46,7 @@
       <div class="hero">
         <div class="wrap hero-grid">
           <div>
-            <p class="eyebrow">Linux Quest</p>
+            <p class="eyebrow"><img class="eyebrow-logo" src="logo.svg" alt="" width="20" height="20">Linux · zero to on-call</p>
             <h1>The machine under everything.</h1>
             <p class="sub">Processes, files, permissions, systemd and networking, on a server that misbehaves on purpose. Free, in your browser, nothing to install.</p>
           </div>
@@ -69,6 +69,7 @@
       </div>
       <div class="wrap">
         <div class="stats" id="stats"></div>
+        <section class="engage" id="engage" aria-label="Your learning"></section>
 
         <section class="bento-block" aria-labelledby="bento-title">
           <h2 id="bento-title" class="big-title">Everything you need, from the first command to the 3 a.m. incident.</h2>
@@ -190,8 +191,8 @@
     <div class="wrap foot-grid">
       <div class="foot-brand">
         <a class="brand" href="#path">
-          <img src="logo.svg" alt="" width="28" height="28">
-          Linux Quest
+          <img class="mark" src="nimbus.svg" alt="" width="47" height="28">
+          DevOps Nimbus <span class="brand-track">Linux</span>
         </a>
         <p>Learn Linux by fixing a server that misbehaves on purpose: a playground, a path, quizzes and references, free for everyone.</p>
         <a class="pill small-pill foot-gh" data-repo="" href="#">GitHub source code</a>
@@ -207,6 +208,7 @@
       </nav>
       <nav class="foot-col" aria-label="Project">
         <h2>Project</h2>
+        <a href="https://sandeepkomal.github.io/devops-nimbus/">All DevOps Nimbus tracks</a>
         <a data-repo="/blob/main/Linux_commands.md" href="#">Linux commands guide</a>
         <a data-repo="/blob/main/docs/troubleshooting.md" href="#">Troubleshooting guide</a>
         <a data-repo="/blob/main/CONTRIBUTING.md" href="#">Contributing</a>
@@ -218,7 +220,7 @@
     <div class="wrap foot-base">
       <p>© 2024–2026 Sandeep Komal Pothu and contributors.</p>
       <p>Open source under the <a data-repo="/blob/main/LICENSE" href="#">MIT License</a>. Built with no trackers, no cookies and nothing loaded from other sites.</p>
-      <p>Your progress (levels, quiz scores, solved scenarios) stays in this browser and is never sent anywhere. <button type="button" class="link-btn" id="forget">Clear it</button></p>
+      <p>Your progress (levels, quiz scores, solved scenarios, score, activity days) stays in this browser and is never sent anywhere. <button type="button" class="link-btn" id="forget">Clear it</button></p>
       <p class="foot-tm">Linux® is the registered trademark of Linus Torvalds in the U.S. and other countries. This project is independent and not affiliated with the Linux Foundation.</p>
     </div>
   </footer>
@@ -241,5 +243,6 @@
   <script src="scenarios.js"></script>
   <script src="playground.js"></script>
   <script src="architecture.js"></script>
+  <script src="engage.js"></script>
 </body>
 </html>

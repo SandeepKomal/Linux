@@ -13,9 +13,9 @@ A practical Linux reference for **DevOps engineers, cloud engineers, SREs, syste
 - Shell operators
 - DevOps troubleshooting workflows
 
-## Linux Quest: learn by fixing a server
+## DevOps Nimbus Linux: learn by fixing a server
 
-**[Open Linux Quest](https://sandeepkomal.github.io/Linux/)**, a free site that runs in your browser, with nothing to install and no account:
+**[Open DevOps Nimbus Linux](https://sandeepkomal.github.io/Linux/)**, a free site that runs in your browser, with nothing to install and no account:
 
 - **Playground**: simulated Ubuntu 24.04 and Rocky Linux 9 servers with 60 real incidents to fix (permission denied, disk full but du finds nothing, services that will not start, DNS, firewalls, SELinux, LVM, NFS, sudoers, emergency mode, OOM kills, cron jobs that never run). Real commands, real error messages, three hints each.
 - **Path**: 17 levels from your first `ls` to incident response, each with a lab for a real machine.

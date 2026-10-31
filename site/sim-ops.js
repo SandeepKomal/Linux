@@ -1,4 +1,4 @@
-// Linux Quest simulator, part 2: processes and signals, systemd and the
+// DevOps Nimbus Linux simulator, part 2: processes and signals, systemd and the
 // journal, disks and mounts, the network, users and sudo, packages, cron,
 // time, and reboots. Output formats follow Ubuntu 24.04 (systemd 255,
 // procps-ng 4, util-linux 2.39, iproute2 6, curl 8, BIND 9.18).

@@ -1,7 +1,7 @@
 // Scenario-based quiz questions, five or more per level. answer is the index of the right option.
 "use strict";
 
-window.QUEST_QUIZ = {
+window.TRACK_QUIZ = {
   "00": [
     { q: "You open a terminal on a new server. Which command tells you which folder you are in?", options: ["`pwd`", "`whoami`", "`ls`", "`cd`"], answer: 0, why: "`pwd` prints the working directory. `whoami` prints your user name, `ls` lists files and `cd` with no argument takes you home." },
     { q: "`ls` shows nothing in your home folder, yet you are sure there is a `.bashrc`. Why?", options: ["Names starting with a dot are hidden; use `ls -a`", "It is in /etc", "You need sudo", "ls only shows folders"], answer: 0, why: "Dotfiles are hidden by convention. `ls -a` (or `-la` for details) shows them." },

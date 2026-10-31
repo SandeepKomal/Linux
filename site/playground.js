@@ -121,6 +121,7 @@
     if (solved || !scenario.won(host)) return;
     solved = true;
     saved.add(scenario.id);
+    document.dispatchEvent(new CustomEvent("lq:solved", { detail: scenario.id }));
     renderPicker();
     const b = picker.querySelector('[aria-current="true"]');
     if (b) { b.classList.add("just-solved"); b.closest(".pg-group").querySelector(".pg-group-count").classList.add("bump"); }
@@ -128,7 +129,7 @@
     goal.className = "pg-goal done";
     print("");
     print("✓ Fixed. " + scenario.lesson, "ok");
-    const fix = window.QUEST.doctor.find((d) => (d.scenarios || []).includes(scenario.id));
+    const fix = window.TRACK.doctor.find((d) => (d.scenarios || []).includes(scenario.id));
     if (fix) print(`  Reference: ${fix.title} (Troubleshoot tab).`, "dim");
     const next = SCENARIOS.find((s) => !saved.get().includes(s.id));
     print(next ? `  Next: ${next.title}. Pick it above, or type 'next'.` : "  You solved every scenario. Now try the levels on a real machine.", "dim");
@@ -198,7 +199,7 @@
 
   const reveal = () => { $("pg-term").scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); input.focus({ preventScroll: true }); };
   window.LQPlayground = {
-    scenarios: SCENARIOS.map((s) => ({ id: s.id, title: s.title })),
+    scenarios: SCENARIOS.map((s) => ({ id: s.id, title: s.title, story: s.story, level: s.level })),
     load: (id) => { if (id !== scenario.id || !host) load(id); reveal(); },
     // From the cheat sheet: open the scenario a command needs and run it there.
     prefill: (cmd, where) => {

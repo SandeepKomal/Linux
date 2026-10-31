@@ -15,7 +15,7 @@ const rich = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
 function load() {
   global.window = global.window || {};
   for (const f of ["data.js", "sim.js", "sim-ops.js", "sim-admin.js", "world.js", "rhel.js", "scenarios.js"]) require(path.join(root, "site", f));
-  return { Q: window.QUEST, titles: Object.fromEntries(window.LQSim.SCENARIOS.map((s) => [s.id, s.title])) };
+  return { Q: window.TRACK, titles: Object.fromEntries(window.LQSim.SCENARIOS.map((s) => [s.id, s.title])) };
 }
 
 function problems() {
@@ -56,12 +56,12 @@ function problems() {
   <link rel="canonical" href="${Q.site}problems.html">
   <title>Linux errors and fixes</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <header class="top">
     <div class="wrap top-inner">
-      <a class="brand" href="index.html"><img src="logo.svg" alt="" width="22" height="22"> Linux Quest</a>
+      <a class="brand" href="index.html" aria-label="DevOps Nimbus Linux, home"><img class="mark" src="nimbus.svg" alt="" width="37" height="22"> DevOps Nimbus <span class="brand-track">Linux</span></a>
       <nav aria-label="Sections"><a href="index.html#path">Path</a><a href="index.html#doctor">Troubleshoot</a><a href="index.html#cheats">Cheat sheet</a></nav>
     </div>
   </header>

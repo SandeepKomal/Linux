@@ -1,4 +1,4 @@
-// Linux Quest simulator, part 2b: day-to-day admin tools with their own
+// DevOps Nimbus Linux simulator, part 2b: day-to-day admin tools with their own
 // state: logrotate, journal files, the effective sshd configuration and
 // fail2ban, NFS mounts, swap files, and TLS certificates.
 "use strict";

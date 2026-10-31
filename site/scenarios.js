@@ -1,4 +1,4 @@
-// Linux Quest simulator, part 4: the scenarios. Each one changes the base
+// DevOps Nimbus Linux simulator, part 4: the scenarios. Each one changes the base
 // machine (setup runs before boot, after runs once it is up) and says how to
 // tell it is fixed (won) and what to show while you work (check).
 "use strict";
