@@ -1,4 +1,4 @@
-// Linux Quest simulator, part 3b: the Rocky Linux 9 profile. Same engine,
+// DevOps Nimbus Linux simulator, part 3b: the Rocky Linux 9 profile. Same engine,
 // different distribution: dnf and rpm, SELinux, firewalld, LVM with XFS,
 // /var/log/messages and secure, wheel instead of sudo. Output follows
 // Rocky 9.4 (dnf 4, firewalld 1.3, lvm2 2.03, xfsprogs 6.3).

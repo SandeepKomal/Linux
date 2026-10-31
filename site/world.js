@@ -1,4 +1,4 @@
-// Linux Quest simulator, part 3: the machine every scenario starts from.
+// DevOps Nimbus Linux simulator, part 3: the machine every scenario starts from.
 // web-01 is an Ubuntu 24.04 server on a private network, with ssh, cron and
 // the time service running, a few neighbours, and a DNS resolver.
 "use strict";

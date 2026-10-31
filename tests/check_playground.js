@@ -854,7 +854,7 @@ fixed(h, "lvm: lvextend -r");
 // one left to Lab really cannot run here, so neither list goes stale.
 global.window = {};
 require(path.resolve(__dirname, "../site/data.js"));
-const Q = window.QUEST;
+const Q = window.TRACK;
 const runsIn = (id, cmd) => {
   const hh = fresh(id);
   const res = shell(hh, cmd);

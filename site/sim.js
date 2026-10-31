@@ -1,4 +1,4 @@
-// Linux Quest simulator, part 1: the modelled host (files, users, sessions)
+// DevOps Nimbus Linux simulator, part 1: the modelled host (files, users, sessions)
 // and a small bash: quoting, variables, globs, pipes, redirects, && and ||,
 // scripts with a shebang, and the file and text commands.
 //

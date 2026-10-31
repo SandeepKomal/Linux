@@ -1,7 +1,7 @@
-// Content for the Linux Quest site. Plain data, no logic.
+// Content for the DevOps Nimbus Linux site. Plain data, no logic.
 "use strict";
 
-window.QUEST = {
+window.TRACK = {
   repo: "https://github.com/SandeepKomal/Linux",
   site: "https://sandeepkomal.github.io/Linux/",
 
