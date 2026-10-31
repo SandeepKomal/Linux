@@ -647,7 +647,7 @@ window.QUEST = {
     ["type cd", "Builtin, alias or file", "System", "any"]
   ],
 
-  // The Linux architecture tab. where: User space, Kernel, Hardware.
+  // The Linux internals tab. where: User space, Kernel, Hardware.
   architecture: {
     components: [
       { id: "apps", name: "Applications", short: "nginx, postgres, your code", where: "User space",

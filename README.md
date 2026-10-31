@@ -21,7 +21,7 @@ A practical Linux reference for **DevOps engineers, cloud engineers, SREs, syste
 - **Path**: 17 levels from your first `ls` to incident response, each with a lab for a real machine.
 - **Troubleshoot**: paste an error message and get the cause, how to confirm it, the fix and how to prevent it. Also as plain HTML: [problems.html](https://sandeepkomal.github.io/Linux/problems.html).
 - **Unit file X-ray**: paste a systemd unit or a crontab to see every line explained and the risky ones flagged.
-- **Quiz**, **cheat sheet** and an interactive **Linux architecture** diagram.
+- **Quiz**, **cheat sheet** and an interactive **Linux internals** diagram.
 
 The site lives in [`site/`](./site) (static files, no dependencies, no trackers). Run it locally with `cd site && python3 -m http.server`, then open http://localhost:8000.
 
