@@ -106,7 +106,7 @@ Linux basics
 | [`Linux_commands.md`](./Linux_commands.md) | The main command reference |
 | [`docs/troubleshooting.md`](./docs/troubleshooting.md) | A step-by-step server troubleshooting guide |
 | [`site/`](./site) | The learning site (static HTML, CSS and JavaScript) |
-| [`scripts/`](./scripts) | `build-problems.js`, which regenerates `site/problems.html` and `sitemap.xml` |
+| [`scripts/`](./scripts) | `build-problems.js`, which regenerates `site/problems.html`, `sitemap.xml` and `scenario-index.js` |
 | [`tests/`](./tests) | Node.js checks for the site data, playground, X-ray and problems page |
 | [`.github/workflows/`](./.github/workflows) | `ci.yml` (site tests) and `pages.yml` (deploys `site/`) |
 
@@ -125,7 +125,7 @@ node tests/check_site_data.js     # levels, quiz, references, page security rule
 node tests/check_playground.js    # every scenario starts broken, wrong moves fail, the fix works
 node tests/fuzz_playground.js     # thousands of random commands, no exceptions
 node tests/check_xray.js          # unit file and crontab explainer
-node scripts/build-problems.js    # regenerate site/problems.html and sitemap.xml after editing site/data.js
+node scripts/build-problems.js    # regenerate site/problems.html, sitemap.xml and scenario-index.js after editing site/data.js or scenarios.js
 node tests/check_problems.js      # fails if they are out of date
 ```
 

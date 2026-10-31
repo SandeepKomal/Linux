@@ -13,6 +13,10 @@
   <link rel="canonical" href="https://sandeepkomal.github.io/Linux/">
   <title>Linux · DevOps Nimbus</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preload" href="data.js" as="script">
+  <link rel="preload" href="scenario-index.js" as="script">
+  <link rel="preload" href="app.js" as="script">
+  <link rel="preload" href="engage.js" as="script">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
@@ -238,18 +242,10 @@
     <p class="palette-foot muted"><kbd>↑</kbd> <kbd>↓</kbd> to move · <kbd>Enter</kbd> to open · <kbd>Esc</kbd> to close</p>
   </dialog>
 
+  <!-- Only what the first screen needs; app.js loads the playground, X-ray, quiz bank and internals after it. -->
   <script src="data.js"></script>
-  <script src="quiz-bank.js"></script>
-  <script src="xray-explain.js"></script>
+  <script src="scenario-index.js"></script>
   <script src="app.js"></script>
-  <script src="sim.js"></script>
-  <script src="sim-ops.js"></script>
-  <script src="sim-admin.js"></script>
-  <script src="world.js"></script>
-  <script src="rhel.js"></script>
-  <script src="scenarios.js"></script>
-  <script src="playground.js"></script>
-  <script src="architecture.js"></script>
   <script src="engage.js"></script>
 </body>
 </html>

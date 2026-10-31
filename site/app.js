@@ -3,6 +3,7 @@
 
 (function () {
   const Q = window.TRACK;
+  const SCENARIOS = window.TRACK_SCENARIOS;
   const $ = (sel) => document.querySelector(sel);
   const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   const scrollToEl = (el) => el.scrollIntoView({ block: "start", behavior: still() ? "auto" : "smooth" });
@@ -51,8 +52,37 @@
     }, label);
   }
 
-  const scenarioTitles = () => Object.fromEntries((window.LQPlayground ? window.LQPlayground.scenarios : []).map((x) => [x.id, x.title]));
+  const scenarioTitles = () => Object.fromEntries(SCENARIOS.map((x) => [x.id, x.title]));
   function practise(id) { location.hash = "play/" + id; }
+
+  // --- heavy features load after the first screen ---------------------------------------
+  // The first screen needs only data.js, scenario-index.js, this file and engage.js. The
+  // rest loads in the background once it is drawn, and at once when someone needs it.
+  const FEATURES = {
+    play: ["sim.js", "sim-ops.js", "sim-admin.js", "world.js", "rhel.js", "scenarios.js", "playground.js"],
+    xray: ["xray-explain.js"],
+    quiz: ["quiz-bank.js"],
+    arch: ["architecture.js"]
+  };
+  const scripts = {};
+  // Appends the scripts in order and resolves once they have all run. They download in
+  // parallel; a list of several runs in its own order.
+  function load(srcs) {
+    return Promise.all(srcs.map((src) => scripts[src] || (scripts[src] = new Promise((resolve, reject) => {
+      const el = document.createElement("script");
+      el.src = src;
+      el.async = srcs.length === 1;
+      el.onload = resolve;
+      el.onerror = () => { delete scripts[src]; el.remove(); reject(new Error("Could not load " + src)); };
+      document.body.append(el);
+    }))));
+  }
+  const ready = {};
+  // need("quiz").then(...): anything that calls into a lazy feature waits for it here.
+  function need(name) {
+    return ready[name] || (ready[name] = load(FEATURES[name]).then(() => { if (INIT[name]) INIT[name](); })
+      .catch((e) => { delete ready[name]; throw e; }));
+  }
   const repoUrl = (p) => `${Q.repo}/blob/main/${p.split("/").map(encodeURIComponent).join("/")}`;
 
   document.querySelectorAll("[data-repo]").forEach((a) => { a.href = Q.repo + a.dataset.repo; });
@@ -78,8 +108,10 @@
     document.querySelectorAll(".subnav a").forEach((a) => {
       if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    if (FEATURES[tab]) need(tab);
+    if (tab === "cheats") drawCheats();
     if (want === "fix" && sub) openFix(sub);
-    if (want === "play" && sub && window.LQPlayground) window.LQPlayground.load(sub);
+    if (want === "play" && sub) need("play").then(() => { if (location.hash === "#play/" + sub) window.LQPlayground.load(sub); });
   }
   window.addEventListener("hashchange", () => {
     const before = current;
@@ -110,7 +142,7 @@
       h("div.mono", null, h("span.dim", null, "/dev/nvme0n1p1  20G  used "), pct), h("div.gauge", { "aria-hidden": "true" }, gauge), rows,
       h("button.linkish.stage-try", { type: "button", onclick: () => practise("deletedopen") }, "Fix it yourself in the playground"));
     draw(false);
-    const n = window.LQPlayground ? window.LQPlayground.scenarios.length : 0;
+    const n = SCENARIOS.length;
     $("#stats").replaceChildren(...[[n, "incidents to fix, basics to production"], [Q.levels.length, "levels, first command to incident response"], [Q.doctor.length, "error messages explained"]]
       .map(([v, l]) => h("div", null, h("b", null, String(v)), h("span", null, l))));
     $("#pg-count").textContent = String(n);
@@ -147,7 +179,7 @@
             h("div", null, h("h4", null, "Lab on a real Linux machine"), window.LQEngage.order(lv, h("pre", null, h("code", null, lv.lab.join("\n"))))),
             h("p.level-links", null, h("a", { href: repoUrl(lv.docs) }, `Guide: ${lv.docs}`)),
             practiseRow(lv.practise, "Practise in the playground:"))),
-        h("span.actions", null, h("a.small", { href: "#quiz", onclick: () => { $("#quiz-level").value = lv.id; renderQuiz(); } }, lv.id in scores ? `Quiz ${scores[lv.id]}%` : "Quiz"))));
+        h("span.actions", null, h("a.small", { href: "#quiz", onclick: () => quizFor(lv.id) }, lv.id in scores ? `Quiz ${scores[lv.id]}%` : "Quiz"))));
     }
     const stages = [];
     for (const lv of Q.levels) {
@@ -176,6 +208,14 @@
     const a = [...list];
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
     return a;
+  }
+  // Opens the quiz at a level (or "exam") once the question bank has loaded.
+  const quizFor = (id) => need("quiz").then(() => { $("#quiz-level").value = id; renderQuiz(); });
+  function initQuiz() {
+    $("#quiz-level").append(h("option", { value: "exam" }, `Exam: ${EXAM_SIZE} random questions from every level`));
+    for (const lv of Q.levels) $("#quiz-level").append(h("option", { value: lv.id }, `${lv.id} · ${lv.title} (${questionsFor(lv.id).length} questions)`));
+    $("#quiz-level").value = "00";
+    renderQuiz();
   }
   function renderQuiz() {
     const mode = $("#quiz-level").value;
@@ -280,6 +320,12 @@
     explainInput();
   }
 
+  function initXray() {
+    $("#xray-pick").append(h("button", { type: "button", role: "tab", onclick: () => loadExample(-1) }, "Paste your own"),
+      ...window.LQExplain.EXAMPLES.map((ex, i) => h("button", { type: "button", role: "tab", onclick: () => loadExample(i) }, ex.name)));
+    loadExample(0);
+  }
+
   // --- troubleshooting reference ---------------------------------------------------------------
 
   const words = (t) => String(t).toLowerCase().replace(/[^a-z0-9_.:/-]+/g, " ").split(" ").filter((w) => w.length > 2 && !/^\d+$/.test(w));
@@ -348,6 +394,9 @@
       }
     }, "Copy");
   }
+  // The cheat sheet is drawn after the first screen, or when its tab opens.
+  let cheatsDrawn = false;
+  function drawCheats() { if (!cheatsDrawn) { cheatsDrawn = true; renderCheats(); } }
   function renderCheats() {
     const q = $("#cheat-q").value.trim().toLowerCase();
     const out = $("#cheat-out");
@@ -364,8 +413,8 @@
       out.append(h("h3.group", null, group), h("ul.cheats", null, rows.map(([cmd, what, where]) => h("li", null,
         h("div", null, h("code", null, cmd), h("span.muted", null, what)),
         h("div.cheat-actions", null,
-          where && window.LQPlayground
-            ? h("button.copy", { type: "button", title: where === "any" ? "Run it in the playground" : `Run it in the scenario "${titles[where]}"`, onclick: () => window.LQPlayground.prefill(cmd, where) }, "Try")
+          where
+            ? h("button.copy", { type: "button", title: where === "any" ? "Run it in the playground" : `Run it in the scenario "${titles[where]}"`, onclick: () => need("play").then(() => window.LQPlayground.prefill(cmd, where)) }, "Try")
             : h("span.copy.lab", { title: "Needs a real Linux machine" }, "Lab"),
           copyButton(cmd))))));
     }
@@ -405,19 +454,19 @@
   let paletteItems = [], paletteActive = 0;
   const go = (hash, then) => { location.hash = hash; show(); if (then) then(); };
   const ACTIONS = [
-    { label: "Playground: fix a broken server", kind: "Section", run: () => go("path", () => scrollToEl($(".playground"))) },
+    { label: "Playground: fix a broken server", kind: "Section", run: () => { need("play"); go("path", () => scrollToEl($(".playground"))); } },
     { label: "Your path", kind: "Section", run: () => go("path", () => scrollToEl($("#path-title"))) },
-    { label: "Exam: random questions from every level", kind: "Quiz", run: () => go("quiz", () => { $("#quiz-level").value = "exam"; renderQuiz(); }) },
+    { label: "Exam: random questions from every level", kind: "Quiz", run: () => go("quiz", () => quizFor("exam")) },
     { label: "Unit file X-ray", kind: "Section", run: () => go("xray") },
     { label: "Fix: troubleshoot an error", kind: "Section", run: () => go("doctor", () => $("#doctor-q").focus()) },
     { label: "Cheat sheet", kind: "Section", run: () => go("cheats", () => $("#cheat-q").focus()) },
     { label: "Linux internals", kind: "Section", run: () => go("arch") },
-    ...Q.levels.map((lv) => ({ label: `Quiz: ${lv.id} · ${lv.title}`, kind: "Quiz", run: () => go("quiz", () => { $("#quiz-level").value = lv.id; renderQuiz(); }) })),
+    ...Q.levels.map((lv) => ({ label: `Quiz: ${lv.id} · ${lv.title}`, kind: "Quiz", run: () => go("quiz", () => quizFor(lv.id)) })),
     ...Q.doctor.map((d) => ({ label: d.title, hint: d.error, kind: "Troubleshoot", run: () => go("fix/" + d.id) }))
   ];
   function renderPalette() {
     const ws = paletteInput.value.toLowerCase().split(/\s+/).filter(Boolean);
-    const scenarios = (window.LQPlayground ? window.LQPlayground.scenarios : []).map((sc) => ({ label: `Playground: ${sc.title}`, kind: "Practice", run: () => go("play/" + sc.id) }));
+    const scenarios = SCENARIOS.map((sc) => ({ label: `Playground: ${sc.title}`, kind: "Practice", run: () => go("play/" + sc.id) }));
     paletteItems = [...ACTIONS, ...scenarios].filter((a) => { const t = `${a.label} ${a.hint || ""} ${a.kind}`.toLowerCase(); return ws.every((w) => t.includes(w)); }).slice(0, 8);
     paletteActive = Math.min(paletteActive, Math.max(0, paletteItems.length - 1));
     paletteList.replaceChildren(...paletteItems.map((a, i) => h("li", { role: "option", id: "pal-" + i, "aria-selected": String(i === paletteActive), onclick: () => choose(i), onmousemove: () => { if (paletteActive !== i) { paletteActive = i; renderPalette(); } } },
@@ -427,6 +476,7 @@
   }
   function openPalette() {
     if (palette.open) return;
+    need("play");
     paletteInput.value = "";
     paletteActive = 0;
     renderPalette();
@@ -453,16 +503,12 @@
 
   // --- init ----------------------------------------------------------------------------------------
 
-  $("#quiz-level").append(h("option", { value: "exam" }, `Exam: ${EXAM_SIZE} random questions from every level`));
-  for (const lv of Q.levels) $("#quiz-level").append(h("option", { value: lv.id }, `${lv.id} · ${lv.title} (${questionsFor(lv.id).length} questions)`));
-  $("#quiz-level").value = "00";
+  const INIT = { quiz: initQuiz, xray: initXray };
   $("#quiz-level").addEventListener("change", renderQuiz);
-  $("#quiz-again").addEventListener("click", () => { renderQuiz(); $("#quiz-list").scrollIntoView({ block: "start" }); });
-  $("#xray-pick").append(h("button", { type: "button", role: "tab", onclick: () => loadExample(-1) }, "Paste your own"),
-    ...window.LQExplain.EXAMPLES.map((ex, i) => h("button", { type: "button", role: "tab", onclick: () => loadExample(i) }, ex.name)));
-  $("#xray-go").addEventListener("click", explainInput);
+  $("#quiz-again").addEventListener("click", () => need("quiz").then(() => { renderQuiz(); $("#quiz-list").scrollIntoView({ block: "start" }); }));
+  $("#xray-go").addEventListener("click", () => need("xray").then(explainInput));
   $("#xray-clear").addEventListener("click", () => { $("#xray-input").value = ""; $("#xray-error").hidden = true; $("#xray-result").hidden = true; $("#xray-view").hidden = true; });
-  $("#xray-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) explainInput(); });
+  $("#xray-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) need("xray").then(explainInput); });
   $("#doctor-q").addEventListener("input", renderDoctorList);
   // The home page's "Something broken?" box hands the pasted error to Troubleshoot.
   const doorGo = () => { $("#doctor-q").value = $("#door-q").value; go("doctor", () => { renderDoctorList(); $("#doctor-q").focus(); }); };
@@ -472,19 +518,42 @@
   $("#forget").addEventListener("click", forgetEverything);
   $("#cta-start").addEventListener("click", (e) => { e.preventDefault(); location.hash = "path"; show(); scrollToEl($("#path-title")); });
   $("#cta-try").addEventListener("click", (e) => { e.preventDefault(); practise("noexec"); });
-  document.querySelectorAll("[data-goto]").forEach((t) => t.addEventListener("click", () => { location.hash = t.dataset.goto; if (t.dataset.goto === "path") scrollToEl($(".playground")); }));
+  document.querySelectorAll("[data-goto]").forEach((t) => t.addEventListener("click", () => { location.hash = t.dataset.goto; if (t.dataset.goto === "path") { need("play"); scrollToEl($(".playground")); } }));
+
+  // The playground's scenario picker. It is drawn from the index with the first screen, so
+  // the playground keeps its size when the simulator arrives; playground.js redraws it.
+  function renderPicker(currentId) {
+    const done = new Set(store.get("pg-solved", []));
+    const groups = [];
+    for (const s of SCENARIOS) {
+      let g = groups.find((x) => x.name === s.group);
+      if (!g) groups.push(g = { name: s.group, list: [] });
+      g.list.push(s);
+    }
+    $("#pg-scenarios").replaceChildren(...groups.map(({ name, list }) => {
+      const n = list.filter((s) => done.has(s.id)).length;
+      return h("div.pg-group", null,
+        h("span.pg-group-name", null, name, h("span.pg-group-count" + (n === list.length ? ".done" : ""), null, `${n}/${list.length}`)),
+        h("div.pg-group-items", null, list.map((s) =>
+          h("a.pg-scn", { href: "#play/" + s.id, "aria-current": s.id === currentId ? "true" : null, title: done.has(s.id) ? `${s.title} (solved)` : s.title },
+            done.has(s.id) ? h("span.pg-scn-done", { "aria-hidden": "true" }, "✓") : null, s.title))));
+    }));
+  }
 
   // Shared with the playground, architecture and engage scripts, which load after this one.
-  window.LQUI = { h, rich, practise, copyLinkButton };
+  window.LQUI = { h, rich, practise, copyLinkButton, need, renderPicker };
 
   renderGuides();
-  renderQuiz();
   renderDoctorList();
-  loadExample(0);
+  // The first screen in one pass, as soon as the critical scripts have run; then the rest.
   window.addEventListener("DOMContentLoaded", () => {
+    const first = SCENARIOS.find((s) => location.hash === "#play/" + s.id) || SCENARIOS[0];
     renderHero();
     renderPath();
-    renderCheats();
+    window.LQEngage.render();
+    renderPicker(first.id);
+    $("#pg-goal").textContent = "Goal: " + first.goal;
     show();
+    (window.requestIdleCallback || ((fn) => setTimeout(fn, 200)))(() => { drawCheats(); for (const name of Object.keys(FEATURES)) need(name).catch(() => { /* retried on first use */ }); });
   });
 })();
