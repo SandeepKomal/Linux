@@ -23,12 +23,18 @@
         Linux Quest
       </a>
       <nav aria-label="Sections">
-        <a href="#path" data-tab="path">Path</a>
-        <a href="#quiz" data-tab="quiz">Quiz</a>
-        <a href="#xray" data-tab="xray">Unit file X-ray</a>
-        <a href="#doctor" data-tab="doctor">Troubleshoot</a>
-        <a href="#cheats" data-tab="cheats">Cheat sheet</a>
-        <a href="#arch" data-tab="arch">Linux internals</a>
+        <div class="mode learn" role="group" aria-label="Learn">
+          <span class="mode-k">Learn</span>
+          <a href="#path" data-tab="path">Path</a>
+          <a href="#quiz" data-tab="quiz">Quiz</a>
+          <a href="#xray" data-tab="xray">Unit file X-ray</a>
+          <a href="#arch" data-tab="arch">Linux internals</a>
+        </div>
+        <div class="mode fix" role="group" aria-label="Fix">
+          <span class="mode-k">Fix</span>
+          <a href="#doctor" data-tab="doctor">Troubleshoot</a>
+          <a href="#cheats" data-tab="cheats">Cheat sheet</a>
+        </div>
       </nav>
       <button type="button" class="kbd-btn" id="palette-open" aria-label="Search the site (Ctrl+K)"><span>Search</span><kbd id="palette-key">Ctrl K</kbd></button>
       <a class="gh" id="gh-link" href="#">GitHub</a>
@@ -43,9 +49,19 @@
             <p class="eyebrow">Linux Quest</p>
             <h1>The machine under everything.</h1>
             <p class="sub">Processes, files, permissions, systemd and networking, on a server that misbehaves on purpose. Free, in your browser, nothing to install.</p>
-            <div class="ctas">
-              <a class="btn" id="cta-start" href="#path-title">Start the path</a>
-              <a class="link" id="cta-try" href="#play/noexec">Try a scenario</a>
+          </div>
+          <div class="doors">
+            <div class="door learn">
+              <p class="door-k">Learning Linux?</p>
+              <h2>Start from zero, step by step.</h2>
+              <p>Levels in order, each with a hands-on incident to fix in your browser.</p>
+              <div class="ctas"><a class="btn" id="cta-start" href="#path-title">Start the path</a><a class="link" id="cta-try" href="#play/noexec">Try a scenario</a></div>
+            </div>
+            <div class="door fix">
+              <p class="door-k">Something broken right now?</p>
+              <h2>Paste the error, get the fix.</h2>
+              <p>The cause, the commands to confirm it and the fix, for every common Linux error.</p>
+              <div class="door-search"><input id="door-q" type="search" placeholder="Paste an error, e.g. No space left on device" aria-label="Paste an error" autocomplete="off"><button type="button" class="pill" id="door-go">Find the fix</button></div>
             </div>
           </div>
           <div class="stage" id="stage"></div>
@@ -59,9 +75,9 @@
           <div class="bento">
             <button type="button" class="tile wide" data-goto="path"><span class="k">Playground</span><span class="t">A shell with a story.</span><span class="p">Full disks, stuck services, ports in use, permissions denied: a real Linux shell over a modelled server.</span></button>
             <button type="button" class="tile wide" data-goto="xray"><span class="k">Unit file X-ray</span><span class="t">systemd, decoded.</span><span class="p">Why your service restarts, waits, or never starts. Crontabs too.</span></button>
-            <button type="button" class="tile" data-goto="doctor"><span class="k">Troubleshoot</span><span class="t">Paste the error, get the answer.</span></button>
             <button type="button" class="tile" data-goto="quiz"><span class="k">Quiz</span><span class="t">Know why, not just how.</span></button>
             <button type="button" class="tile" data-goto="arch"><span class="k">Internals</span><span class="t">Kernel to user space.</span></button>
+            <button type="button" class="tile" data-goto="doctor"><span class="k">Stuck on an error?</span><span class="t">Learn why it happens, then practise the fix.</span></button>
           </div>
         </section>
 
@@ -140,8 +156,9 @@
     </section>
 
     <section id="tab-doctor" class="tab wrap" hidden>
-      <h2>Troubleshooting reference</h2>
-      <p class="lede">Paste the error you see. Each answer gives the exact message, what it means, how to confirm it, the fix, how to prevent it, and a scenario to practise it. Every answer has its own link.</p>
+      <p class="mode-banner"><strong>Fix mode.</strong> For when something is broken right now. Learning Linux instead? <a href="#path">Start the path</a>.</p>
+      <h2>Stuck on an error?</h2>
+      <p class="lede">Paste the error you see. Each answer explains why it happens, how to confirm it and how to fix and prevent it, then gives you a safe scenario to break and fix it yourself, so you recognise it next time. Every answer has its own link.</p>
       <div class="guide-slot" data-guide="doctor"></div>
       <label class="field wide-field">Search by error text, symptom or tool
         <input id="doctor-q" type="search" placeholder="Paste an error: No space left on device, 203/EXEC, Permission denied (publickey)…" autocomplete="off">

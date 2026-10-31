@@ -88,7 +88,7 @@ window.QUEST = {
       tips: ["Everything stays in your browser. Do not paste real secrets anyway."]
     },
     doctor: {
-      what: "Every common Linux error and symptom, written as a reference answer: the exact error, what it means, how to confirm it, how to fix it, how to prevent it, and a scenario to practise it.",
+      what: "Every common Linux error and symptom, written as a reference answer: the exact error, why it happens, how to confirm it, how to fix it, how to prevent it, and a scenario to break and fix it yourself.",
       steps: ["Paste the error you see into the search box, or type a symptom or a tool name.", "Open the entry. Run the confirm commands before you change anything.", "Practise the fix in the playground, then apply it for real."],
       uses: ["Look up an error during an incident.", "Share an answer with a colleague: every entry has its own link."],
       tips: ["Paste the whole line; the search matches words from the real message.", "A JavaScript-free copy of this reference is on problems.html."]
