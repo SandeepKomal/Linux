@@ -1,4 +1,4 @@
-// The Linux architecture tab: user space, the system call boundary, the
+// The Linux internals tab: user space, the system call boundary, the
 // kernel's subsystems and the hardware. Every part can be pointed at, tapped
 // or reached with Tab to read what it does and how it fails.
 "use strict";
@@ -77,7 +77,7 @@
     const L = LAYOUTS[matchMedia("(max-width: 720px)").matches ? "narrow" : "wide"];
     const [w, ht] = L.size;
     const arrow = (id) => s("marker", { id, viewBox: "0 0 8 8", refX: 7, refY: 4, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, s("path", { d: "M0 0 8 4 0 8z" }));
-    svg = s("svg", { viewBox: `0 0 ${w} ${ht}`, class: "arch-svg", role: "group", "aria-label": "Linux architecture" }, s("defs", null, arrow("arch-arrow"), arrow("arch-arrow-on")));
+    svg = s("svg", { viewBox: `0 0 ${w} ${ht}`, class: "arch-svg", role: "group", "aria-label": "Linux internals" }, s("defs", null, arrow("arch-arrow"), arrow("arch-arrow-on")));
     for (const [label, x, y, pw, ph, kind] of L.panels) {
       svg.append(s("rect", { x, y, width: pw, height: ph, rx: 16, class: `arch-panel arch-${kind}` }), s("text", { x: x + 14, y: y + 22, class: "arch-panel-label" }, label));
     }

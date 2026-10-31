@@ -405,7 +405,7 @@
     { label: "Unit file X-ray", kind: "Section", run: () => go("xray") },
     { label: "Troubleshoot: search an error message", kind: "Section", run: () => go("doctor", () => $("#doctor-q").focus()) },
     { label: "Cheat sheet", kind: "Section", run: () => go("cheats", () => $("#cheat-q").focus()) },
-    { label: "Linux architecture", kind: "Section", run: () => go("arch") },
+    { label: "Linux internals", kind: "Section", run: () => go("arch") },
     ...Q.levels.map((lv) => ({ label: `Quiz: ${lv.id} · ${lv.title}`, kind: "Quiz", run: () => go("quiz", () => { $("#quiz-level").value = lv.id; renderQuiz(); }) })),
     ...Q.doctor.map((d) => ({ label: d.title, hint: d.error, kind: "Troubleshoot", run: () => go("fix/" + d.id) }))
   ];
