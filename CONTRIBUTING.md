@@ -13,7 +13,8 @@ Before opening a pull request:
 - Scenarios live in `site/scenarios.js`. Each one needs a story, a goal, three hints (each more direct), a lesson, `won(host)` and a live `check(host)`. Add it to a group in `GROUPS`, link it from a troubleshooting entry in `site/data.js`, and add tests to `tests/check_playground.js`: it starts broken, the tempting wrong moves do not fix it, and the intended fix does.
 - Error messages must be the ones the real tool prints on Ubuntu 24.04.
 - Cheat sheet rows marked Try must run cleanly in their scenario; the test checks this.
-- After editing `site/data.js`, run `node scripts/build-problems.js` to regenerate `site/problems.html`.
+- After editing `site/data.js` or `site/scenarios.js`, run `node scripts/build-problems.js` to regenerate `site/problems.html` and `site/scenario-index.js` (the scenario list the first screen uses before the simulator loads).
+- `index.html` loads only what the first screen needs; `app.js` loads the playground, X-ray, quiz bank and internals in the background. Code that calls into them waits for `need("play")` (or `xray`, `quiz`, `arch`) first.
 - Run every test in the README before opening a pull request.
 
 ## Personal data

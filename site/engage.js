@@ -4,11 +4,14 @@
 "use strict";
 (function () {
   const Q = window.TRACK;
+  const SCENARIOS = window.TRACK_SCENARIOS;
   const { h, rich } = window.LQUI;
   const PREFIX = "lq:";
   const get = (k, d) => { try { return JSON.parse(localStorage.getItem(PREFIX + k)) ?? d; } catch { return d; } };
   const set = (k, v) => { try { localStorage.setItem(PREFIX + k, JSON.stringify(v)); } catch { /* private mode */ } };
-  const day = (d) => d.toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const day = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; // YYYY-MM-DD in local time
+  const shortDate = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }); // one formatter for all 90 days
   const today = () => day(new Date());
   const clock = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
@@ -65,7 +68,8 @@
   let shift = get("shift", null);
   let tick;
   function startShift() {
-    const all = window.LQPlayground.scenarios;
+    window.LQUI.need("play");
+    const all = SCENARIOS;
     const solved = new Set(get("pg-solved", []));
     const pool = all.filter((s) => !solved.has(s.id));
     const pick = (pool.length ? pool : all)[Math.floor(Math.random() * (pool.length || all.length))];
@@ -94,7 +98,7 @@
         h("p", null, log.count ? `${log.count} shift${log.count > 1 ? "s" : ""} done · best ${clock(log.best)}` : "A random incident you have not solved yet, against the clock."),
         h("button.pill.primary", { type: "button", onclick: startShift }, log.count ? "Take another shift" : "Start a shift"));
     }
-    const s = window.LQPlayground.scenarios.find((x) => x.id === shift.id);
+    const s = SCENARIOS.find((x) => x.id === shift.id);
     if (!s) { shift = null; return shiftCard(); }
     const time = h("span.eng-time", { "aria-live": "off" }, clock(Date.now() - shift.at));
     tick = setInterval(() => { time.textContent = clock(Date.now() - shift.at); }, 1000);
@@ -146,7 +150,7 @@
     const solved = new Set(get("pg-solved", []));
     const stages = [...new Set(Q.levels.map((l) => l.stage))].map((name) => {
       const ids = Q.levels.filter((l) => l.stage === name).map((l) => l.id);
-      const scn = window.LQPlayground.scenarios.filter((s) => ids.includes(s.level));
+      const scn = SCENARIOS.filter((s) => ids.includes(s.level));
       const lv = ids.filter((id) => done.has(id)).length / ids.length;
       return { name, v: scn.length ? (lv + scn.filter((s) => solved.has(s.id)).length / scn.length) / 2 : lv };
     });
@@ -179,7 +183,7 @@
     for (let i = 0; i < 90; i++, d.setDate(d.getDate() + 1)) {
       const on = Boolean(log[day(d)]);
       if (on && i >= 60) up30++;
-      bars.push(h("span.eng-up" + (on ? ".on" : ""), { title: `${d.toLocaleDateString(undefined, { day: "numeric", month: "short" })}: ${on ? "practised" : "rest day"}` }));
+      bars.push(h("span.eng-up" + (on ? ".on" : ""), { title: `${shortDate.format(d)}: ${on ? "practised" : "rest day"}` }));
     }
     const pct = up30 / 30 * 100;
     const ok = pct >= 4 / 7 * 100;
@@ -205,7 +209,7 @@
     return h("div.eng-board", null,
       h("div.eng-panels", null, radar(), uptime()),
       h("div.eng-stats", null,
-        stat(`${sc.solved}/${window.LQPlayground.scenarios.length}`, "incidents fixed"),
+        stat(`${sc.solved}/${SCENARIOS.length}`, "incidents fixed"),
         stat(`${sc.levels}/${Q.levels.length}`, "levels done"),
         stat(`${sc.passed}/${Q.levels.length}`, "quizzes passed"),
         stat(String(shifts.count), shifts.best ? `shifts · best ${clock(shifts.best)}` : "on-call shifts"),
@@ -255,7 +259,7 @@
 
   function render() {
     const box = document.getElementById("engage");
-    if (!box || !window.LQPlayground) return;
+    if (!box) return;
     box.replaceChildren(continueCard(), shiftCard(), scoreCard(), board());
   }
 
@@ -300,6 +304,6 @@
     return box;
   }
 
+  // app.js draws this with the rest of the first screen.
   window.LQEngage = { order, active, render };
-  window.addEventListener("DOMContentLoaded", render);
 })();

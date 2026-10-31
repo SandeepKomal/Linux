@@ -5,7 +5,7 @@
 
 (function () {
   const L = window.LQSim;
-  const { SCENARIOS, GROUPS } = L;
+  const { SCENARIOS } = L;
   const { h, copyLinkButton } = window.LQUI;
   const $ = (id) => document.getElementById(id);
   const out = $("pg-out"), form = $("pg-form"), input = $("pg-input"), map = $("pg-map"), goal = $("pg-goal"), picker = $("pg-scenarios"), tries = $("pg-try"), promptEl = $("pg-prompt");
@@ -43,19 +43,8 @@
     return `${s.user}@${host.hostname}:${where}${s.user === "root" ? "#" : "$"}`;
   }
 
-  function renderPicker() {
-    const done = new Set(saved.get());
-    picker.replaceChildren(...GROUPS.map(([group, ids]) => {
-      const n = ids.filter((id) => done.has(id)).length;
-      return h("div.pg-group", null,
-        h("span.pg-group-name", null, group, h("span.pg-group-count" + (n === ids.length ? ".done" : ""), null, `${n}/${ids.length}`)),
-        h("div.pg-group-items", null, ids.map((id) => {
-          const s = SCENARIOS.find((x) => x.id === id);
-          return h("a.pg-scn", { href: "#play/" + id, "aria-current": s === scenario ? "true" : null, title: done.has(id) ? `${s.title} (solved)` : s.title },
-            done.has(id) ? h("span.pg-scn-done", { "aria-hidden": "true" }, "✓") : null, s.title);
-        })));
-    }));
-  }
+  // The picker is shared with app.js, which draws it before this script loads.
+  const renderPicker = () => window.LQUI.renderPicker(scenario.id);
 
   // The host at a glance: the scenario's live check, services, disks, memory and load.
   function renderMap() {

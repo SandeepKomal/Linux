@@ -378,6 +378,10 @@ kbd { font: 500 .72rem/1 var(--mono); color: var(--muted); background: var(--sur
 .pg-meter i { display: block; height: 100%; border-radius: 99px; transition: width .6s var(--ease); }
 .pg-meter i.ok { background: var(--ok); } .pg-meter i.warn { background: var(--warn); } .pg-meter i.bad { background: var(--bad); }
 .pg-try { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+/* Held open until the playground script fills them, so the page below does not move. */
+.pg-map:empty { min-height: 288px; }
+.pg-try:empty { min-height: 31px; }
+.arch:empty { min-height: 480px; }
 .pg-try .chip { font: .76rem var(--mono); padding: 6px 12px; }
 @media (prefers-color-scheme: dark) {
   .pg-dot { color: #000; }
@@ -466,6 +470,7 @@ kbd { font: 500 .72rem/1 var(--mono); color: var(--muted); background: var(--sur
   .doctor-group-name, .pg-group-name { min-height: 0; }
   .level-body { grid-template-columns: minmax(0, 1fr); }
   .pg-out { height: 320px; }
+  .pg-try:empty { min-height: 67px; }
   #xray-note { position: static; }
 }
 @media (max-width: 720px) {
