@@ -71,7 +71,7 @@ assert.strictEqual(new Set(Q.cheats.map((r) => r[0])).size, Q.cheats.length, "ch
 // The page: the CSP, no inline styles or handlers, nothing from other sites.
 const html = fs.readFileSync(path.join(root, "site/index.html"), "utf8");
 assert.match(html, /<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">/);
-assert.doesNotMatch(html, /\sstyle=|\son[a-z]+=|<script>(?!<\/script>)|(src|href)="https?:\/\/(?!sandeepkomal\.github\.io\/(Linux|devops-nimbus)\/")/i, "no inline styles, handlers, scripts or third-party loads");
+assert.doesNotMatch(html, /\sstyle=|\son[a-z]+=|<script>(?!<\/script>)|src="https?:|href="https?:\/\/(?!sandeepkomal\.github\.io\/(Linux|devops-nimbus)\/"|github\.com\/SandeepKomal"|docs\.github\.com\/en\/site-policy\/)/i, "no inline styles, handlers, scripts or third-party loads");
 for (const src of html.match(/src="[^"]+"/g)) assert.ok(fs.existsSync(path.join(root, "site", src.slice(5, -1))), `${src} exists`);
 assert.match(html, /<meta name="description" content="[^"]{80,}">/);
 assert.match(html, /<meta property="og:title" content="[^"]+">/);
