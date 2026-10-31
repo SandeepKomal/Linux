@@ -32,5 +32,8 @@ jobs:
       - name: Unit file X-ray
         run: node tests/check_xray.js
 
+      - name: Troubleshoot search finds the right answer or none
+        run: node tests/check_doctor_search.js
+
       - name: problems.html and sitemap.xml are up to date
         run: node tests/check_problems.js

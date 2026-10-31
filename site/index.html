@@ -175,7 +175,6 @@
         <input id="doctor-q" type="search" placeholder="Paste an error: No space left on device, 203/EXEC, Permission denied (publickey)…" autocomplete="off">
       </label>
       <div id="doctor-list" class="doctor-groups"></div>
-      <p class="muted" id="doctor-none" hidden>No entry matches. Try fewer words, or the tool's name (systemctl, ssh, cron, mount).</p>
       <div id="doctor-out"></div>
       <p class="note">A plain copy of this reference, readable without JavaScript: <a href="problems.html">problems.html</a>.</p>
     </section>
@@ -245,6 +244,7 @@
   <!-- Only what the first screen needs; app.js loads the playground, X-ray, quiz bank and internals after it. -->
   <script src="data.js"></script>
   <script src="scenario-index.js"></script>
+  <script src="doctor-search.js"></script>
   <script src="app.js"></script>
   <script src="engage.js"></script>
 </body>

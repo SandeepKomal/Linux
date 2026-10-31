@@ -328,35 +328,37 @@
 
   // --- troubleshooting reference ---------------------------------------------------------------
 
-  const words = (t) => String(t).toLowerCase().replace(/[^a-z0-9_.:/-]+/g, " ").split(" ").filter((w) => w.length > 2 && !/^\d+$/.test(w));
-  const docText = (d) => [d.title, d.error, d.symptom, ...d.cause, ...d.confirm, ...d.fix, d.prevent, d.group].join(" ").toLowerCase();
-  // Pasted error text matches on its words; the best matches come first.
-  function searchDoctor(q) {
-    const ws = [...new Set(words(q))];
-    if (!ws.length) return Q.doctor.map((d) => ({ d, score: 0 }));
-    return Q.doctor.map((d) => {
-      const text = docText(d), err = d.error.toLowerCase();
-      const score = ws.reduce((s, w) => s + (err.includes(w) ? 2 : text.includes(w) ? 1 : 0), 0);
-      return { d, score };
-    }).filter((x) => x.score >= Math.max(1, Math.ceil(ws.length * 0.4))).sort((a, b) => b.score - a.score);
-  }
+  // Pasted errors go through doctor-search.js. An entry is shown as the answer only when the
+  // paste contains one of its signatures; otherwise the page says it has no answer.
+  const fixChips = (list) => h("div.doctor-group-items", null, list.map((d) => h("a.chip", { href: "#fix/" + d.id, "aria-current": location.hash === "#fix/" + d.id ? "true" : null }, d.title)));
+  const fixGroup = (name, list) => h("div.doctor-group", null, h("div.doctor-group-name", null, name, h("span.doctor-group-count", null, String(list.length))), fixChips(list.slice(0, 12)));
   function renderDoctorList() {
     const q = $("#doctor-q").value;
-    const hits = searchDoctor(q);
     const box = $("#doctor-list");
-    if (q.trim()) {
-      box.replaceChildren(h("div.doctor-group", null, h("div.doctor-group-name", null, "Best matches", h("span.doctor-group-count", null, String(hits.length))),
-        h("div.doctor-group-items", null, hits.slice(0, 12).map(({ d }) => h("a.chip", { href: "#fix/" + d.id }, d.title)))));
-      $("#doctor-none").hidden = hits.length > 0;
-      return;
+    if (!q.trim()) {
+      const groups = [...new Set(Q.doctor.map((d) => d.group))];
+      box.replaceChildren(...groups.map((g) => fixGroup(g, Q.doctor.filter((d) => d.group === g))));
+      return null;
     }
-    const groups = [...new Set(Q.doctor.map((d) => d.group))];
-    box.replaceChildren(...groups.map((g) => {
-      const items = Q.doctor.filter((d) => d.group === g);
-      return h("div.doctor-group", null, h("div.doctor-group-name", null, g, h("span.doctor-group-count", null, String(items.length))),
-        h("div.doctor-group-items", null, items.map((d) => h("a.chip", { href: "#fix/" + d.id, "aria-current": location.hash === "#fix/" + d.id ? "true" : null }, d.title))));
-    }));
-    $("#doctor-none").hidden = true;
+    const r = window.LQDoctorSearch.search(q, Q.doctor);
+    if (r.answer) box.replaceChildren(fixGroup("Matches this error", r.matches));
+    else if (r.topic.length) box.replaceChildren(fixGroup(`Entries that mention “${q.trim()}”`, r.topic));
+    else box.replaceChildren(h("div.doctor-empty", { role: "status" },
+      h("h3", null, "No exact answer for this error yet"),
+      h("p.muted", null, "Search with the key line of the error, the one that says what failed, without names, paths or times."),
+      r.related.length ? fixGroup("Related, may not apply", r.related) : null));
+    if (!r.answer && !r.topic.length) $("#doctor-out").replaceChildren();
+    return r;
+  }
+  // Enter, a paste or the home page's box: open the answer when there is one.
+  function lookUpError() {
+    const r = renderDoctorList();
+    if (r && r.answer) {
+      if (location.hash === "#fix/" + r.answer.id) openFix(r.answer.id); else location.hash = "fix/" + r.answer.id;
+    } else if (/^#fix\//.test(location.hash)) {
+      $("#doctor-out").replaceChildren();
+      history.replaceState(null, "", "#doctor");
+    }
   }
   function openFix(id) {
     const d = Q.doctor.find((x) => x.id === id);
@@ -509,9 +511,10 @@
   $("#xray-go").addEventListener("click", () => need("xray").then(explainInput));
   $("#xray-clear").addEventListener("click", () => { $("#xray-input").value = ""; $("#xray-error").hidden = true; $("#xray-result").hidden = true; $("#xray-view").hidden = true; });
   $("#xray-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) need("xray").then(explainInput); });
-  $("#doctor-q").addEventListener("input", renderDoctorList);
+  $("#doctor-q").addEventListener("input", (e) => { if (e.inputType === "insertFromPaste") lookUpError(); else renderDoctorList(); });
+  $("#doctor-q").addEventListener("keydown", (e) => { if (e.key === "Enter") lookUpError(); });
   // The home page's "Something broken?" box hands the pasted error to Troubleshoot.
-  const doorGo = () => { $("#doctor-q").value = $("#door-q").value; go("doctor", () => { renderDoctorList(); $("#doctor-q").focus(); }); };
+  const doorGo = () => { $("#doctor-q").value = $("#door-q").value; go("doctor", () => { $("#doctor-q").focus(); lookUpError(); }); };
   $("#door-go").addEventListener("click", doorGo);
   $("#door-q").addEventListener("keydown", (e) => { if (e.key === "Enter") doorGo(); });
   $("#cheat-q").addEventListener("input", renderCheats);

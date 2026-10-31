@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="description" content="Common Linux errors and how to fix them: Permission denied when running a script, bad interpreter: No such file or directory, Operation not permitted, even as root, EACCES: permission denied in a service's log, 403 Forbidden from nginx, 404 everywhere after a deploy: broken symlink, and 72 more, each with the cause, how to confirm it, the fix and how to prevent it.">
+  <meta name="description" content="Common Linux errors and how to fix them: Permission denied when running a script, bad interpreter: No such file or directory, Operation not permitted, even as root, EACCES: permission denied in a service's log, 403 Forbidden from nginx, 404 everywhere after a deploy: broken symlink, and 83 more, each with the cause, how to confirm it, the fix and how to prevent it.">
   <meta property="og:type" content="article">
   <meta property="og:title" content="Linux errors and how to fix them">
-  <meta property="og:description" content="78 common Linux error messages, each with the cause, how to confirm it, the fix and how to prevent it.">
+  <meta property="og:description" content="89 common Linux error messages, each with the cause, how to confirm it, the fix and how to prevent it.">
   <meta property="og:url" content="https://sandeepkomal.github.io/Linux/problems.html">
   <link rel="canonical" href="https://sandeepkomal.github.io/Linux/problems.html">
   <title>Linux errors and fixes</title>
@@ -36,22 +36,22 @@
   </header>
   <main class="wrap problems">
     <h1 class="big-title">Linux errors and how to fix them</h1>
-    <p class="lede">78 error messages and symptoms from real servers. Each answer gives the exact message, why it happens, how to confirm it, the fix, how to prevent it, and then a scenario to break and fix it yourself in the <a href="index.html#path">playground</a>. Generated from the site's data; the <a href="index.html#doctor">interactive reference</a> adds search by pasted error text.</p>
+    <p class="lede">89 error messages and symptoms from real servers. Each answer gives the exact message, why it happens, how to confirm it, the fix, how to prevent it, and then a scenario to break and fix it yourself in the <a href="index.html#path">playground</a>. Generated from the site's data; the <a href="index.html#doctor">interactive reference</a> adds search by pasted error text.</p>
     <nav class="card toc" aria-label="Problems">
       <h2>Files and permissions</h2>
       <ul><li><a href="#permission-denied-script">Permission denied when running a script</a></li><li><a href="#bad-interpreter">bad interpreter: No such file or directory</a></li><li><a href="#operation-not-permitted-root">Operation not permitted, even as root</a></li><li><a href="#eacces-service">EACCES: permission denied in a service's log</a></li><li><a href="#forbidden-403">403 Forbidden from nginx</a></li><li><a href="#broken-symlink">404 everywhere after a deploy: broken symlink</a></li><li><a href="#command-not-found">command not found (but it works for me)</a></li><li><a href="#argument-list-too-long">Argument list too long</a></li></ul>
       <h2>Processes</h2>
-      <ul><li><a href="#high-cpu-load">High load average, CPU at 100%</a></li><li><a href="#kill-9-data-loss">Half-written file or stale lock after kill -9</a></li><li><a href="#zombie-defunct">Zombie &lt;defunct&gt; processes</a></li><li><a href="#already-running-pidfile">Already running (stale PID file)</a></li><li><a href="#killed-oom">Killed, with no error in the log</a></li></ul>
+      <ul><li><a href="#high-cpu-load">High load average, CPU at 100%</a></li><li><a href="#kill-9-data-loss">Half-written file or stale lock after kill -9</a></li><li><a href="#zombie-defunct">Zombie &lt;defunct&gt; processes</a></li><li><a href="#already-running-pidfile">Already running (stale PID file)</a></li><li><a href="#fork-resource-unavailable">fork: Resource temporarily unavailable</a></li><li><a href="#killed-oom">Killed, with no error in the log</a></li></ul>
       <h2>Services</h2>
-      <ul><li><a href="#status-203-exec">status=203/EXEC</a></li><li><a href="#unit-masked">Unit is masked</a></li><li><a href="#changed-on-disk">Unit file changed on disk</a></li><li><a href="#not-started-at-boot">Service missing after every reboot</a></li><li><a href="#systemctl-access-denied">Failed to restart: Access denied</a></li><li><a href="#start-limit-hit">Start request repeated too quickly</a></li><li><a href="#address-in-use">Address already in use</a></li><li><a href="#job-failed-control-process">Job failed because the control process exited with error code</a></li><li><a href="#econnrefused-at-boot">Connection refused only after a reboot</a></li><li><a href="#no-installation-config">The unit files have no installation config</a></li><li><a href="#cron-syntax-error">Cron ignores a file in /etc/cron.d</a></li><li><a href="#crontab-missing-newline">new crontab file is missing newline before EOF</a></li><li><a href="#role-does-not-exist">pg_dump: role &quot;root&quot; does not exist</a></li><li><a href="#env-not-set-in-service">Variable set in my shell, missing in the service</a></li></ul>
+      <ul><li><a href="#status-203-exec">status=203/EXEC</a></li><li><a href="#unit-masked">Unit is masked</a></li><li><a href="#changed-on-disk">Unit file changed on disk</a></li><li><a href="#not-started-at-boot">Service missing after every reboot</a></li><li><a href="#systemctl-access-denied">Failed to restart: Access denied</a></li><li><a href="#start-limit-hit">Start request repeated too quickly</a></li><li><a href="#address-in-use">Address already in use</a></li><li><a href="#job-failed-control-process">Job failed because the control process exited with error code</a></li><li><a href="#econnrefused-at-boot">Connection refused only after a reboot</a></li><li><a href="#no-installation-config">The unit files have no installation config</a></li><li><a href="#unit-not-found">Unit not found</a></li><li><a href="#bad-unit-setting">Unit has a bad unit file setting</a></li><li><a href="#exec-format-error">Exec format error</a></li><li><a href="#not-booted-with-systemd">System has not been booted with systemd</a></li><li><a href="#cron-syntax-error">Cron ignores a file in /etc/cron.d</a></li><li><a href="#crontab-missing-newline">new crontab file is missing newline before EOF</a></li><li><a href="#role-does-not-exist">pg_dump: role &quot;root&quot; does not exist</a></li><li><a href="#env-not-set-in-service">Variable set in my shell, missing in the service</a></li></ul>
       <h2>Disks</h2>
-      <ul><li><a href="#no-space-left">No space left on device</a></li><li><a href="#df-du-mismatch">df says full, du finds much less</a></li><li><a href="#inodes-exhausted">No space left, with space left (inodes)</a></li><li><a href="#read-only-file-system">Read-only file system</a></li><li><a href="#target-is-busy">umount: target is busy</a></li><li><a href="#e2fsck-mounted">e2fsck: Cannot continue, aborting</a></li><li><a href="#resize-nothing-to-do">resize2fs: Nothing to do!</a></li><li><a href="#emergency-mode">You are in emergency mode</a></li><li><a href="#cant-find-uuid">mount: can't find UUID</a></li><li><a href="#logrotate-insecure-permissions">logrotate: parent directory has insecure permissions</a></li><li><a href="#rotated-log-still-held">Space not freed after log rotation</a></li><li><a href="#journal-disk-usage">The journal is using gigabytes</a></li><li><a href="#stale-file-handle">Stale file handle</a></li></ul>
+      <ul><li><a href="#no-space-left">No space left on device</a></li><li><a href="#df-du-mismatch">df says full, du finds much less</a></li><li><a href="#inodes-exhausted">No space left, with space left (inodes)</a></li><li><a href="#read-only-file-system">Read-only file system</a></li><li><a href="#target-is-busy">umount: target is busy</a></li><li><a href="#e2fsck-mounted">e2fsck: Cannot continue, aborting</a></li><li><a href="#resize-nothing-to-do">resize2fs: Nothing to do!</a></li><li><a href="#emergency-mode">You are in emergency mode</a></li><li><a href="#cant-find-uuid">mount: can't find UUID</a></li><li><a href="#mount-wrong-fs-type">mount: wrong fs type, bad option, bad superblock</a></li><li><a href="#logrotate-insecure-permissions">logrotate: parent directory has insecure permissions</a></li><li><a href="#rotated-log-still-held">Space not freed after log rotation</a></li><li><a href="#journal-disk-usage">The journal is using gigabytes</a></li><li><a href="#stale-file-handle">Stale file handle</a></li></ul>
       <h2>Networking</h2>
       <ul><li><a href="#could-not-resolve">Temporary failure in name resolution</a></li><li><a href="#dig-vs-getent">dig shows the right address, the app uses another</a></li><li><a href="#network-unreachable">Network is unreachable</a></li><li><a href="#nexthop-invalid-gateway">Error: Nexthop has invalid gateway</a></li><li><a href="#connection-timed-out">Connection timed out</a></li><li><a href="#connection-refused">Connection refused</a></li><li><a href="#unable-to-resolve-host">sudo: unable to resolve host</a></li><li><a href="#cert-not-yet-valid">SSL certificate problem: certificate is not yet valid</a></li></ul>
       <h2>Users and security</h2>
-      <ul><li><a href="#not-in-sudoers">is not in the sudoers file</a></li><li><a href="#sudo-not-allowed">Sorry, user is not allowed to execute</a></li><li><a href="#sudoers-parse-error">sudo: parse error in sudoers</a></li><li><a href="#unprotected-private-key">WARNING: UNPROTECTED PRIVATE KEY FILE!</a></li><li><a href="#permission-denied-publickey">Permission denied (publickey)</a></li><li><a href="#bad-ownership-or-modes">Authentication refused: bad ownership or modes</a></li><li><a href="#world-readable-secret">Secrets file readable by everyone</a></li><li><a href="#service-on-all-interfaces">Internal service listening on 0.0.0.0</a></li><li><a href="#usermod-lost-groups">A user lost their groups after usermod</a></li><li><a href="#ssh-brute-force">SSH brute force in auth.log</a></li><li><a href="#certificate-expired">SSL certificate problem: certificate has expired</a></li></ul>
+      <ul><li><a href="#not-in-sudoers">is not in the sudoers file</a></li><li><a href="#sudo-not-allowed">Sorry, user is not allowed to execute</a></li><li><a href="#sudo-no-tty">sudo: a terminal is required to read the password</a></li><li><a href="#sudoers-parse-error">sudo: parse error in sudoers</a></li><li><a href="#unprotected-private-key">WARNING: UNPROTECTED PRIVATE KEY FILE!</a></li><li><a href="#permission-denied-publickey">Permission denied (publickey)</a></li><li><a href="#bad-ownership-or-modes">Authentication refused: bad ownership or modes</a></li><li><a href="#host-key-changed">REMOTE HOST IDENTIFICATION HAS CHANGED</a></li><li><a href="#world-readable-secret">Secrets file readable by everyone</a></li><li><a href="#service-on-all-interfaces">Internal service listening on 0.0.0.0</a></li><li><a href="#usermod-lost-groups">A user lost their groups after usermod</a></li><li><a href="#nologin-shell">This account is currently not available</a></li><li><a href="#ssh-brute-force">SSH brute force in auth.log</a></li><li><a href="#certificate-expired">SSL certificate problem: certificate has expired</a></li></ul>
       <h2>Boot, kernel and packages</h2>
-      <ul><li><a href="#dpkg-lock">Could not get lock /var/lib/dpkg/lock-frontend</a></li><li><a href="#dpkg-interrupted">dpkg was interrupted</a></li><li><a href="#release-not-valid-yet">Release file is not valid yet</a></li><li><a href="#reboot-required">System restart required</a></li><li><a href="#ip-forward-off">Routing or NAT stops after a reboot</a></li></ul>
+      <ul><li><a href="#dpkg-lock">Could not get lock /var/lib/dpkg/lock-frontend</a></li><li><a href="#dpkg-interrupted">dpkg was interrupted</a></li><li><a href="#apt-unable-to-locate">E: Unable to locate package</a></li><li><a href="#apt-no-pubkey">apt: NO_PUBKEY, repository is not signed</a></li><li><a href="#release-not-valid-yet">Release file is not valid yet</a></li><li><a href="#reboot-required">System restart required</a></li><li><a href="#ip-forward-off">Routing or NAT stops after a reboot</a></li></ul>
       <h2>Rocky Linux and RHEL</h2>
       <ul><li><a href="#dnf-no-match">dnf: Unable to find a match</a></li><li><a href="#selinux-avc-denied">SELinux denial: 403 with correct permissions</a></li><li><a href="#bind-permission-denied-selinux">bind() failed (13: Permission denied) on a custom port</a></li><li><a href="#firewalld-blocks">firewalld drops traffic to a new port</a></li><li><a href="#resize2fs-bad-magic">resize2fs: Bad magic number in super-block</a></li><li><a href="#lvextend-insufficient-space">lvextend: Insufficient free space</a></li></ul>
       <h2>Performance</h2>
@@ -265,6 +265,25 @@ ps -fp 1187</code></pre>
         <p>Keep PID files in /run (cleared at boot) and let systemd track the main PID.</p>
         <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/stalepid">Already running, but it is not</a>, then take <a href="index.html#path">Level 05 · Processes and signals</a>. <a href="index.html#fix/already-running-pidfile">Open in the interactive reference</a> · <a href="#already-running-pidfile">Link to this answer</a></p>
       </section>
+      <section class="card fix problem" id="fork-resource-unavailable">
+        <p class="tag">Processes</p>
+        <h3>fork: Resource temporarily unavailable</h3>
+        <pre class="fix-error"><code>-bash: fork: retry: Resource temporarily unavailable</code></pre>
+        <h4>What you see</h4>
+        <p>New commands fail to start; ssh logins may fail too.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A user or a service hit its process limit (<code>ulimit -u</code>, or TasksMax= for a service)</li><li>A fork loop, or a program that leaks threads</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ulimit -u
+ps -eLf | wc -l   # threads on the box
+ps -eo user= | sort | uniq -c | sort -rn | head
+systemctl show -p TasksMax -p TasksCurrent SERVICE</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Stop the runaway: systemctl stop SERVICE, or pkill -u USER NAME</li><li>Raise the limit only once you know the load is real: TasksMax= in a drop-in, or nproc in /etc/security/limits.d/</li></ul>
+        <h4>Prevent it</h4>
+        <p>Keep TasksMax= on services so one cannot exhaust the box, and alert on thread counts.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/ulimit">Too many open files</a> · <a href="index.html#play/runaway">A process eating the CPU</a>, then take <a href="index.html#path">Level 05 · Processes and signals</a>. <a href="index.html#fix/fork-resource-unavailable">Open in the interactive reference</a> · <a href="#fork-resource-unavailable">Link to this answer</a></p>
+      </section>
       <section class="card fix problem" id="killed-oom">
         <p class="tag">Processes</p>
         <h3>Killed, with no error in the log</h3>
@@ -453,6 +472,75 @@ systemctl cat inventory | grep -E 'After|Wants|Requires'</code></pre>
         <h4>Prevent it</h4>
         <p>Start unit files from a template that includes [Install].</p>
         <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/notenabled">Gone after every reboot</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/no-installation-config">Open in the interactive reference</a> · <a href="#no-installation-config">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="unit-not-found">
+        <p class="tag">Services</p>
+        <h3>Unit not found</h3>
+        <pre class="fix-error"><code>Failed to restart mysql.service: Unit mysql.service not found.</code></pre>
+        <h4>What you see</h4>
+        <p>systemctl cannot find the service you name.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The package that ships the unit is not installed, or the service has another name here (mariadb or mysql, apache2 or httpd)</li><li>A unit file was added or renamed without <code>systemctl daemon-reload</code></li><li>A typo, or a user service that needs <code>systemctl --user</code></li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemctl list-unit-files | grep -i -e mysql -e maria
+ls /etc/systemd/system /usr/lib/systemd/system | grep -i sql</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Use the unit's real name from list-unit-files</li><li>sudo systemctl daemon-reload after adding or renaming a unit file</li><li>Install the package that provides the service</li></ul>
+        <h4>Prevent it</h4>
+        <p>Check <code>systemctl list-unit-files</code> before you write a unit name into a script or runbook.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/daemonreload">The unit change did not take</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/unit-not-found">Open in the interactive reference</a> · <a href="#unit-not-found">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="bad-unit-setting">
+        <p class="tag">Services</p>
+        <h3>Unit has a bad unit file setting</h3>
+        <pre class="fix-error"><code>Failed to start worker.service: Unit worker.service has a bad unit file setting.</code></pre>
+        <h4>What you see</h4>
+        <p>A service will not start and systemctl blames the unit file.</p>
+        <h4>Why it happens</h4>
+        <ul><li>A required line is missing, such as ExecStart= (the journal says: Service has no ExecStart=...)</li><li>A typo in a key or a section name</li><li>A value systemd cannot parse</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>systemd-analyze verify /etc/systemd/system/worker.service
+journalctl -b -u worker | tail
+systemctl cat worker</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Fix the line systemd names, then sudo systemctl daemon-reload &amp;&amp; sudo systemctl start worker</li></ul>
+        <h4>Prevent it</h4>
+        <p>Run <code>systemd-analyze verify</code> on every unit file before you install it.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/badexec">status=203/EXEC</a> · <a href="index.html#play/daemonreload">The unit change did not take</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/bad-unit-setting">Open in the interactive reference</a> · <a href="#bad-unit-setting">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="exec-format-error">
+        <p class="tag">Services</p>
+        <h3>Exec format error</h3>
+        <pre class="fix-error"><code>-bash: ./node_exporter: cannot execute binary file: Exec format error</code></pre>
+        <h4>What you see</h4>
+        <p>A program you downloaded, or a script that systemd starts, will not run.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The binary is built for another CPU: an arm64 build on x86_64, or the other way round</li><li>A script without a <code>#!</code> first line, started by systemd or exec</li><li>The download is an archive or an HTML error page, not the program</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>uname -m   # x86_64 or aarch64
+file ./node_exporter   # ELF 64-bit ... x86-64 or ARM aarch64
+head -1 SCRIPT   # must start with #!</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Download the build for your architecture (amd64 for x86_64, arm64 for aarch64)</li><li>Add a shebang such as <code>#!/bin/bash</code> as the script's first line</li></ul>
+        <h4>Prevent it</h4>
+        <p>Pick downloads by <code>uname -m</code>, and give every script a <code>#!</code> line.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/badexec">status=203/EXEC</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/exec-format-error">Open in the interactive reference</a> · <a href="#exec-format-error">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="not-booted-with-systemd">
+        <p class="tag">Services</p>
+        <h3>System has not been booted with systemd</h3>
+        <pre class="fix-error"><code>System has not been booted with systemd as init system (PID 1). Can't operate.</code></pre>
+        <h4>What you see</h4>
+        <p>systemctl fails inside a container or in WSL.</p>
+        <h4>Why it happens</h4>
+        <ul><li>PID 1 is not systemd: Docker and most containers run your program as PID 1</li><li>WSL started without systemd</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ps -p 1 -o comm=</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>In a container, run the program in the foreground instead of starting it with systemctl</li><li>On WSL, add <code>[boot]</code> and <code>systemd=true</code> to /etc/wsl.conf, then run <code>wsl --shutdown</code> in Windows and reopen it</li></ul>
+        <h4>Prevent it</h4>
+        <p>Practise services on a VM or a cloud instance, where systemd is PID 1; keep a container to one foreground process.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/notenabled">Gone after every reboot</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/not-booted-with-systemd">Open in the interactive reference</a> · <a href="#not-booted-with-systemd">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="cron-syntax-error">
         <p class="tag">Services</p>
@@ -675,6 +763,24 @@ lsblk -f</code></pre>
         <h4>Prevent it</h4>
         <p>Paste UUIDs, never type them.</p>
         <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/fstab">Emergency mode after an fstab change</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/cant-find-uuid">Open in the interactive reference</a> · <a href="#cant-find-uuid">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="mount-wrong-fs-type">
+        <p class="tag">Disks</p>
+        <h3>mount: wrong fs type, bad option, bad superblock</h3>
+        <pre class="fix-error"><code>mount: /mnt/data: wrong fs type, bad option, bad superblock on /dev/sdc, missing codepage or helper program, or other error.</code></pre>
+        <h4>What you see</h4>
+        <p>mount fails on a new disk, a partition or a network share.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The device has no file system yet (a new volume)</li><li>You mounted the whole disk (/dev/sdc) and the file system is on a partition (/dev/sdc1)</li><li>The helper is missing: nfs-common (nfs-utils on RHEL) for NFS, cifs-utils for SMB</li><li>A misspelled mount option</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>lsblk -f
+sudo blkid /dev/sdc
+sudo dmesg | tail</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Mount the partition and type that lsblk -f shows</li><li>Only for a new, empty volume: sudo mkfs.ext4 /dev/sdc (this erases it)</li><li>sudo apt install nfs-common (or cifs-utils)</li></ul>
+        <h4>Prevent it</h4>
+        <p>Check <code>lsblk -f</code> before mount or mkfs, and test every fstab line with <code>sudo mount -a</code>.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/fstab">Emergency mode after an fstab change</a> · <a href="index.html#play/growfs">The disk grew, the filesystem did not</a>, then take <a href="index.html#path">Level 10 · Mounts and file systems</a>. <a href="index.html#fix/mount-wrong-fs-type">Open in the interactive reference</a> · <a href="#mount-wrong-fs-type">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="logrotate-insecure-permissions">
         <p class="tag">Disks</p>
@@ -919,6 +1025,23 @@ sudo -l -U alice</code></pre>
         <p>Keep CI sudo rules in version control, next to the units they restart.</p>
         <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/sudo-not-allowed">Open in the interactive reference</a> · <a href="#sudo-not-allowed">Link to this answer</a></p>
       </section>
+      <section class="card fix problem" id="sudo-no-tty">
+        <p class="tag">Users and security</p>
+        <h3>sudo: a terminal is required to read the password</h3>
+        <pre class="fix-error"><code>sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper</code></pre>
+        <h4>What you see</h4>
+        <p>sudo works when you type it, but fails in a script, cron job, CI step or ssh command.</p>
+        <h4>Why it happens</h4>
+        <ul><li>sudo needs a password and there is no terminal to ask on</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>sudo -l -U deploy
+sudo -n true &amp;&amp; echo no password needed</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Allow the exact command without a password, in a drop-in edited with sudo visudo -f /etc/sudoers.d/deploy: deploy ALL=(root) NOPASSWD: /usr/bin/systemctl restart orders</li><li>For one interactive run over ssh: ssh -t HOST sudo COMMAND</li></ul>
+        <h4>Prevent it</h4>
+        <p>Give automation NOPASSWD rules for the commands it needs and nothing more; never pipe a password into <code>sudo -S</code>.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a> · <a href="index.html#play/sudoers">sudo: parse error in sudoers</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/sudo-no-tty">Open in the interactive reference</a> · <a href="#sudo-no-tty">Link to this answer</a></p>
+      </section>
       <section class="card fix problem" id="sudoers-parse-error">
         <p class="tag">Users and security</p>
         <h3>sudo: parse error in sudoers</h3>
@@ -985,6 +1108,23 @@ ls -l /home/deploy/.ssh</code></pre>
         <p>Never chmod -R a home folder.</p>
         <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sshauth">Authentication refused: bad ownership or modes</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/bad-ownership-or-modes">Open in the interactive reference</a> · <a href="#bad-ownership-or-modes">Link to this answer</a></p>
       </section>
+      <section class="card fix problem" id="host-key-changed">
+        <p class="tag">Users and security</p>
+        <h3>REMOTE HOST IDENTIFICATION HAS CHANGED</h3>
+        <pre class="fix-error"><code>WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!</code></pre>
+        <h4>What you see</h4>
+        <p>ssh refuses a server it knew before: Host key verification failed.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The server was rebuilt or reinstalled, or its address now belongs to another machine</li><li>Someone is intercepting the connection: rare, but this is what the check is for</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>ssh-keygen -F db-01   # the key you saved
+ssh-keyscan db-01 | ssh-keygen -lf -   # the key it shows now; compare with the server's console</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Once you know the change is expected: ssh-keygen -R db-01 (and its IP address), then connect and accept the new key</li></ul>
+        <h4>Prevent it</h4>
+        <p>When you rebuild a server, share its new host key fingerprint; never switch off StrictHostKeyChecking to make the warning go away.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sshkey">UNPROTECTED PRIVATE KEY FILE</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/host-key-changed">Open in the interactive reference</a> · <a href="#host-key-changed">Link to this answer</a></p>
+      </section>
       <section class="card fix problem" id="world-readable-secret">
         <p class="tag">Users and security</p>
         <h3>Secrets file readable by everyone</h3>
@@ -1034,6 +1174,22 @@ grep alice /etc/group</code></pre>
         <h4>Prevent it</h4>
         <p>Always use usermod -aG (or gpasswd -a).</p>
         <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/groups">Added to a group, lost the others</a>, then take <a href="index.html#path">Level 04 · Users, groups and sudo</a>. <a href="index.html#fix/usermod-lost-groups">Open in the interactive reference</a> · <a href="#usermod-lost-groups">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="nologin-shell">
+        <p class="tag">Users and security</p>
+        <h3>This account is currently not available</h3>
+        <pre class="fix-error"><code>This account is currently not available.</code></pre>
+        <h4>What you see</h4>
+        <p>su or ssh to a service account exits at once.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The account's shell is /usr/sbin/nologin: service accounts are made that way on purpose</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>getent passwd www-data</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>Run the command as that user instead: sudo -u www-data COMMAND</li><li>For a shell once: sudo -u www-data bash</li></ul>
+        <h4>Prevent it</h4>
+        <p>Leave service accounts on nologin, and give people their own accounts.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/groups">Added to a group, lost the others</a>, then take <a href="index.html#path">Level 04 · Users, groups and sudo</a>. <a href="index.html#fix/nologin-shell">Open in the interactive reference</a> · <a href="#nologin-shell">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="ssh-brute-force">
         <p class="tag">Users and security</p>
@@ -1103,6 +1259,40 @@ systemctl status unattended-upgrades</code></pre>
         <h4>Prevent it</h4>
         <p>Do not kill apt or delete its locks.</p>
         <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/dpkg-interrupted">Open in the interactive reference</a> · <a href="#dpkg-interrupted">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="apt-unable-to-locate">
+        <p class="tag">Boot, kernel and packages</p>
+        <h3>E: Unable to locate package</h3>
+        <pre class="fix-error"><code>E: Unable to locate package nodejs-lts</code></pre>
+        <h4>What you see</h4>
+        <p>apt install says a package does not exist.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The package lists are old or were never downloaded (a fresh image): run apt update</li><li>The name is wrong, or different on this release</li><li>It lives in a repository you have not added (universe, or the vendor's own)</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>apt-cache search nodejs
+apt-cache policy nodejs</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo apt update, then install again</li><li>Use the real name from apt-cache search</li><li>sudo add-apt-repository universe, or add the vendor's repository</li></ul>
+        <h4>Prevent it</h4>
+        <p>Start scripts for fresh servers with <code>apt-get update</code>.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/apt-unable-to-locate">Open in the interactive reference</a> · <a href="#apt-unable-to-locate">Link to this answer</a></p>
+      </section>
+      <section class="card fix problem" id="apt-no-pubkey">
+        <p class="tag">Boot, kernel and packages</p>
+        <h3>apt: NO_PUBKEY, repository is not signed</h3>
+        <pre class="fix-error"><code>The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 1A2B3C4D5E6F7A8B</code></pre>
+        <h4>What you see</h4>
+        <p>apt update warns about, or refuses, one third-party repository.</p>
+        <h4>Why it happens</h4>
+        <ul><li>The repository's signing key is not installed, or the vendor rotated it</li><li>The sources line points at a keyring (signed-by=) that is missing or holds the old key</li></ul>
+        <h4>Confirm it</h4>
+        <pre><code>grep -r signed-by /etc/apt/sources.list.d/
+ls -l /etc/apt/keyrings /usr/share/keyrings</code></pre>
+        <h4>Fix it</h4>
+        <ul><li>sudo install -d -m 0755 /etc/apt/keyrings</li><li>curl -fsSL VENDOR_KEY_URL | sudo gpg --dearmor -o /etc/apt/keyrings/vendor.gpg</li><li>Point the sources line at it: deb [signed-by=/etc/apt/keyrings/vendor.gpg] URL SUITE main, then sudo apt update</li></ul>
+        <h4>Prevent it</h4>
+        <p>One keyring per repository, named with signed-by=; <code>apt-key</code> is deprecated.</p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/apt-no-pubkey">Open in the interactive reference</a> · <a href="#apt-no-pubkey">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="release-not-valid-yet">
         <p class="tag">Boot, kernel and packages</p>
@@ -1213,7 +1403,7 @@ sudo semanage port -l | grep http_port_t</code></pre>
         <h3>firewalld drops traffic to a new port</h3>
         <pre class="fix-error"><code>curl: (28) Failed to connect to app-01 port 8080 after 134106 ms: Couldn't connect to server</code></pre>
         <h4>What you see</h4>
-        <p>A service works locally but times out from other hosts on RHEL.</p>
+        <p>A service works locally but times out, or fails with No route to host, from other hosts on RHEL.</p>
         <h4>Why it happens</h4>
         <ul><li>The port is not open in the public zone</li><li>Opened at runtime only, lost after --reload or reboot</li></ul>
         <h4>Confirm it</h4>

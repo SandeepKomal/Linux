@@ -266,6 +266,10 @@ select:focus, input[type="search"]:focus { border-color: var(--accent); outline:
 .doctor-group-name { display: flex; align-items: center; gap: 8px; min-height: 34px; font-size: .84rem; font-weight: 600; }
 .doctor-group-count, .pg-group-count { font-size: .72rem; font-weight: 500; color: var(--muted); background: var(--code-bg); border-radius: 99px; padding: 2px 8px; font-variant-numeric: tabular-nums; }
 .doctor-group-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.doctor-empty { padding: 14px 0 6px; }
+.doctor-empty h3 { margin: 0 0 4px; font-size: 1rem; }
+.doctor-empty p { margin: 0 0 6px; }
+.doctor-empty .doctor-group { border-top: 1px solid var(--hair); margin-top: 8px; }
 #doctor-out { scroll-margin-top: 72px; }
 .fix-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .fix h3 { margin: 4px 0 14px; font-size: 1.5rem; }
