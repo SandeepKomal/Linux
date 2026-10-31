@@ -329,7 +329,7 @@
         h("h4", null, "Now learn it"),
         h("p", null, "Break this yourself in a safe playground and fix it. Doing it once is what makes you recognise it next time."),
         practiseRow(d.scenarios, "Practise:"),
-        lv ? h("p.note", null, "Then the level that teaches it: ", h("a", { href: "#path", onclick: () => setTimeout(() => scrollToEl(document.getElementById(stageId(lv.stage))), 0) }, `Level ${lv.id} · ${lv.title}`)) : null)));
+        lv ? h("p.note", null, "Then the level that teaches it: ", h("a", { href: "#path", onclick: (e) => { e.preventDefault(); go("path", () => scrollToEl(document.getElementById(stageId(lv.stage)))); } }, `Level ${lv.id} · ${lv.title}`)) : null)));
     document.querySelectorAll("#doctor-list a.chip").forEach((a) => { if (a.getAttribute("href") === "#fix/" + id) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
     requestAnimationFrame(() => scrollToEl($("#doctor-out")));
   }
