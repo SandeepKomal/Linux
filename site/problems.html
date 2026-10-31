@@ -23,7 +23,7 @@
   </header>
   <main class="wrap problems">
     <h1 class="big-title">Linux errors and how to fix them</h1>
-    <p class="lede">78 error messages and symptoms from real servers. Each answer gives the exact message, why it happens, how to confirm it, the fix, how to prevent it, and a scenario to practise it in the <a href="index.html#path">playground</a>. Generated from the site's data; the <a href="index.html#doctor">interactive reference</a> adds search by pasted error text.</p>
+    <p class="lede">78 error messages and symptoms from real servers. Each answer gives the exact message, why it happens, how to confirm it, the fix, how to prevent it, and then a scenario to break and fix it yourself in the <a href="index.html#path">playground</a>. Generated from the site's data; the <a href="index.html#doctor">interactive reference</a> adds search by pasted error text.</p>
     <nav class="card toc" aria-label="Problems">
       <h2>Files and permissions</h2>
       <ul><li><a href="#permission-denied-script">Permission denied when running a script</a></li><li><a href="#bad-interpreter">bad interpreter: No such file or directory</a></li><li><a href="#operation-not-permitted-root">Operation not permitted, even as root</a></li><li><a href="#eacces-service">EACCES: permission denied in a service's log</a></li><li><a href="#forbidden-403">403 Forbidden from nginx</a></li><li><a href="#broken-symlink">404 everywhere after a deploy: broken symlink</a></li><li><a href="#command-not-found">command not found (but it works for me)</a></li><li><a href="#argument-list-too-long">Argument list too long</a></li></ul>
@@ -60,7 +60,7 @@ findmnt -no OPTIONS --target deploy.sh</code></pre>
         <ul><li>chmod u+x deploy.sh   # or 755</li><li>bash deploy.sh   # runs it once without the bit</li></ul>
         <h4>Prevent it</h4>
         <p>Commit scripts with the bit set (<code>git update-index --chmod=+x</code>). Never use 777: it lets anyone rewrite what runs.</p>
-        <p class="note">Practise it: <a href="index.html#play/noexec">Permission denied on a script</a> · <a href="index.html#fix/permission-denied-script">Open in the interactive reference</a> · <a href="#permission-denied-script">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/noexec">Permission denied on a script</a>, then take <a href="index.html#path">Level 02 · Permissions and ownership</a>. <a href="index.html#fix/permission-denied-script">Open in the interactive reference</a> · <a href="#permission-denied-script">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="bad-interpreter">
         <p class="tag">Files and permissions</p>
@@ -77,7 +77,7 @@ head -1 deploy.sh | od -c | head -2</code></pre>
         <ul><li>sed -i 's/\r$//' deploy.sh</li><li>sudo apt install dos2unix &amp;&amp; dos2unix deploy.sh</li></ul>
         <h4>Prevent it</h4>
         <p>Add <code>*.sh text eol=lf</code> to .gitattributes, and set your editor to LF for scripts.</p>
-        <p class="note">Practise it: <a href="index.html#play/crlf">bad interpreter: ^M</a> · <a href="index.html#fix/bad-interpreter">Open in the interactive reference</a> · <a href="#bad-interpreter">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/crlf">bad interpreter: ^M</a>, then take <a href="index.html#path">Level 02 · Permissions and ownership</a>. <a href="index.html#fix/bad-interpreter">Open in the interactive reference</a> · <a href="#bad-interpreter">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="operation-not-permitted-root">
         <p class="tag">Files and permissions</p>
@@ -93,7 +93,7 @@ head -1 deploy.sh | od -c | head -2</code></pre>
         <ul><li>sudo chattr -i FILE, edit it, then sudo chattr +i FILE if the lock was intended</li></ul>
         <h4>Prevent it</h4>
         <p>Document every immutable file; config management should know about them.</p>
-        <p class="note">Practise it: <a href="index.html#play/immutable">Operation not permitted, even as root</a> · <a href="index.html#fix/operation-not-permitted-root">Open in the interactive reference</a> · <a href="#operation-not-permitted-root">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/immutable">Operation not permitted, even as root</a>, then take <a href="index.html#path">Level 02 · Permissions and ownership</a>. <a href="index.html#fix/operation-not-permitted-root">Open in the interactive reference</a> · <a href="#operation-not-permitted-root">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="eacces-service">
         <p class="tag">Files and permissions</p>
@@ -111,7 +111,7 @@ sudo -u shop test -w /srv/shop/uploads &amp;&amp; echo writable</code></pre>
         <ul><li>sudo chown -R shop:shop /srv/shop/uploads</li><li>sudo chown root:shop FILE &amp;&amp; sudo chmod 640 FILE   # for secrets</li></ul>
         <h4>Prevent it</h4>
         <p>Run deploy steps as the service user (<code>sudo -u shop ...</code>), not as root.</p>
-        <p class="note">Practise it: <a href="index.html#play/rootowned">Files owned by root after sudo</a> · <a href="index.html#play/secretperm">A world-readable secrets file</a> · <a href="index.html#fix/eacces-service">Open in the interactive reference</a> · <a href="#eacces-service">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/rootowned">Files owned by root after sudo</a> · <a href="index.html#play/secretperm">A world-readable secrets file</a>, then take <a href="index.html#path">Level 02 · Permissions and ownership</a>. <a href="index.html#fix/eacces-service">Open in the interactive reference</a> · <a href="#eacces-service">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="forbidden-403">
         <p class="tag">Files and permissions</p>
@@ -129,7 +129,7 @@ sudo -u www-data cat /var/www/html/report.html</code></pre>
         <ul><li>chmod 644 FILE (755 for folders)</li><li>Set umask 022 in the deploy user's profile</li></ul>
         <h4>Prevent it</h4>
         <p>Deploy with a known umask, and test a fresh page after each deploy.</p>
-        <p class="note">Practise it: <a href="index.html#play/umask">403 Forbidden after every deploy</a> · <a href="index.html#fix/forbidden-403">Open in the interactive reference</a> · <a href="#forbidden-403">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/umask">403 Forbidden after every deploy</a>, then take <a href="index.html#path">Level 02 · Permissions and ownership</a>. <a href="index.html#fix/forbidden-403">Open in the interactive reference</a> · <a href="#forbidden-403">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="broken-symlink">
         <p class="tag">Files and permissions</p>
@@ -147,7 +147,7 @@ readlink -f /srv/www/current</code></pre>
         <ul><li>ln -sfn /srv/www/releases/NEW /srv/www/current</li></ul>
         <h4>Prevent it</h4>
         <p>Never delete the release the link points at; keep the last few releases.</p>
-        <p class="note">Practise it: <a href="index.html#play/symlink">Symlink broken after deploy</a> · <a href="index.html#fix/broken-symlink">Open in the interactive reference</a> · <a href="#broken-symlink">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/symlink">Symlink broken after deploy</a>, then take <a href="index.html#path">Level 03 · Links, archives and text tools</a>. <a href="index.html#fix/broken-symlink">Open in the interactive reference</a> · <a href="#broken-symlink">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="command-not-found">
         <p class="tag">Files and permissions</p>
@@ -164,7 +164,7 @@ env -i PATH=/usr/bin:/bin /bin/sh -c 'backup-uploads.sh'</code></pre>
         <ul><li>Use absolute paths, or set PATH= at the top of the crontab</li><li>sudo apt install PACKAGE (Ubuntu says which one)</li></ul>
         <h4>Prevent it</h4>
         <p>Scripts for automation use absolute paths or set PATH themselves.</p>
-        <p class="note">Practise it: <a href="index.html#play/cronpath">Cron job that never works</a> · <a href="index.html#fix/command-not-found">Open in the interactive reference</a> · <a href="#command-not-found">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/cronpath">Cron job that never works</a>, then take <a href="index.html#path">Level 08 · Scheduling with cron</a>. <a href="index.html#fix/command-not-found">Open in the interactive reference</a> · <a href="#command-not-found">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="argument-list-too-long">
         <p class="tag">Files and permissions</p>
@@ -180,7 +180,7 @@ env -i PATH=/usr/bin:/bin /bin/sh -c 'backup-uploads.sh'</code></pre>
         <ul><li>find /var/lib/php/sessions -type f -mmin +1440 -delete</li><li>find DIR -type f -print0 | xargs -0 rm</li></ul>
         <h4>Prevent it</h4>
         <p>Clean up with a scheduled find -delete; do not let one folder collect millions of files.</p>
-        <p class="note">Practise it: <a href="index.html#play/inodes">No space left, with space left</a> · <a href="index.html#fix/argument-list-too-long">Open in the interactive reference</a> · <a href="#argument-list-too-long">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/inodes">No space left, with space left</a>, then take <a href="index.html#path">Level 09 · Disk space</a>. <a href="index.html#fix/argument-list-too-long">Open in the interactive reference</a> · <a href="#argument-list-too-long">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Processes</h2>
       <section class="card fix problem" id="high-cpu-load">
@@ -199,7 +199,7 @@ ps aux --sort=-%cpu | head</code></pre>
         <ul><li>kill PID (SIGTERM) for a stray job</li><li>Stop or limit the service: systemctl set-property NAME CPUQuota=50%</li></ul>
         <h4>Prevent it</h4>
         <p>Run batch work under limits (systemd-run -p CPUQuota=) or off-peak.</p>
-        <p class="note">Practise it: <a href="index.html#play/runaway">A process eating the CPU</a> · <a href="index.html#fix/high-cpu-load">Open in the interactive reference</a> · <a href="#high-cpu-load">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/runaway">A process eating the CPU</a>, then take <a href="index.html#path">Level 05 · Processes and signals</a>. <a href="index.html#fix/high-cpu-load">Open in the interactive reference</a> · <a href="#high-cpu-load">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="kill-9-data-loss">
         <p class="tag">Processes</p>
@@ -216,7 +216,7 @@ cat /var/lib/batch/batchd.lock &amp;&amp; ps -p $(cat /var/lib/batch/batchd.lock
         <ul><li>Next time: kill PID (TERM), wait, then -9 only if it ignores TERM</li><li>Remove the stale lock only after checking no process owns it</li></ul>
         <h4>Prevent it</h4>
         <p>Stop services with systemctl stop, which sends TERM and waits.</p>
-        <p class="note">Practise it: <a href="index.html#play/graceful">kill -9 or a clean stop</a> · <a href="index.html#fix/kill-9-data-loss">Open in the interactive reference</a> · <a href="#kill-9-data-loss">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/graceful">kill -9 or a clean stop</a>, then take <a href="index.html#path">Level 05 · Processes and signals</a>. <a href="index.html#fix/kill-9-data-loss">Open in the interactive reference</a> · <a href="#kill-9-data-loss">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="zombie-defunct">
         <p class="tag">Processes</p>
@@ -233,7 +233,7 @@ ps -fp PPID</code></pre>
         <ul><li>Restart or stop the parent: init then reaps the zombies</li><li>Fix the program to wait() (or ignore SIGCHLD)</li></ul>
         <h4>Prevent it</h4>
         <p>A few zombies are harmless; thousands exhaust PIDs. Alert on the count.</p>
-        <p class="note">Practise it: <a href="index.html#play/zombie">Zombies that will not die</a> · <a href="index.html#fix/zombie-defunct">Open in the interactive reference</a> · <a href="#zombie-defunct">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/zombie">Zombies that will not die</a>, then take <a href="index.html#path">Level 05 · Processes and signals</a>. <a href="index.html#fix/zombie-defunct">Open in the interactive reference</a> · <a href="#zombie-defunct">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="already-running-pidfile">
         <p class="tag">Processes</p>
@@ -250,7 +250,7 @@ ps -fp 1187</code></pre>
         <ul><li>Remove the stale PID file, then start the service. Do not kill the PID blindly.</li></ul>
         <h4>Prevent it</h4>
         <p>Keep PID files in /run (cleared at boot) and let systemd track the main PID.</p>
-        <p class="note">Practise it: <a href="index.html#play/stalepid">Already running, but it is not</a> · <a href="index.html#fix/already-running-pidfile">Open in the interactive reference</a> · <a href="#already-running-pidfile">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/stalepid">Already running, but it is not</a>, then take <a href="index.html#path">Level 05 · Processes and signals</a>. <a href="index.html#fix/already-running-pidfile">Open in the interactive reference</a> · <a href="#already-running-pidfile">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="killed-oom">
         <p class="tag">Processes</p>
@@ -268,7 +268,7 @@ free -h</code></pre>
         <ul><li>Size the heap or workers to the machine (e.g. -Xmx1g)</li><li>Add memory, or move one workload away</li></ul>
         <h4>Prevent it</h4>
         <p>Set MemoryMax= per service and alert on available memory, not on used.</p>
-        <p class="note">Practise it: <a href="index.html#play/oom">Killed by the OOM killer</a> · <a href="index.html#fix/killed-oom">Open in the interactive reference</a> · <a href="#killed-oom">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/oom">Killed by the OOM killer</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/killed-oom">Open in the interactive reference</a> · <a href="#killed-oom">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Services</h2>
       <section class="card fix problem" id="status-203-exec">
@@ -287,7 +287,7 @@ ls -l /opt/orders/bin</code></pre>
         <ul><li>Fix ExecStart (absolute path), then sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart orders-api</li></ul>
         <h4>Prevent it</h4>
         <p>Install binaries with the package that ships the unit; check with systemd-analyze verify.</p>
-        <p class="note">Practise it: <a href="index.html#play/badexec">status=203/EXEC</a> · <a href="index.html#fix/status-203-exec">Open in the interactive reference</a> · <a href="#status-203-exec">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/badexec">status=203/EXEC</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/status-203-exec">Open in the interactive reference</a> · <a href="#status-203-exec">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="unit-masked">
         <p class="tag">Services</p>
@@ -304,7 +304,7 @@ systemctl is-enabled nginx</code></pre>
         <ul><li>sudo systemctl unmask nginx &amp;&amp; sudo systemctl enable --now nginx</li></ul>
         <h4>Prevent it</h4>
         <p>Prefer disable for maintenance; leave a note when you mask.</p>
-        <p class="note">Practise it: <a href="index.html#play/masked">Unit is masked</a> · <a href="index.html#fix/unit-masked">Open in the interactive reference</a> · <a href="#unit-masked">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/masked">Unit is masked</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/unit-masked">Open in the interactive reference</a> · <a href="#unit-masked">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="changed-on-disk">
         <p class="tag">Services</p>
@@ -321,7 +321,7 @@ systemctl cat api</code></pre>
         <ul><li>sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart api</li></ul>
         <h4>Prevent it</h4>
         <p>Use systemctl edit (it reloads for you), or always daemon-reload after editing.</p>
-        <p class="note">Practise it: <a href="index.html#play/daemonreload">The unit change did not take</a> · <a href="index.html#play/badexec">status=203/EXEC</a> · <a href="index.html#fix/changed-on-disk">Open in the interactive reference</a> · <a href="#changed-on-disk">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/daemonreload">The unit change did not take</a> · <a href="index.html#play/badexec">status=203/EXEC</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/changed-on-disk">Open in the interactive reference</a> · <a href="#changed-on-disk">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="not-started-at-boot">
         <p class="tag">Services</p>
@@ -338,7 +338,7 @@ journalctl -b -u metrics-agent</code></pre>
         <ul><li>sudo systemctl enable --now metrics-agent</li></ul>
         <h4>Prevent it</h4>
         <p>Reboot new servers once before production to prove they come back.</p>
-        <p class="note">Practise it: <a href="index.html#play/notenabled">Gone after every reboot</a> · <a href="index.html#play/bootorder">Fails only after a reboot</a> · <a href="index.html#fix/not-started-at-boot">Open in the interactive reference</a> · <a href="#not-started-at-boot">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/notenabled">Gone after every reboot</a> · <a href="index.html#play/bootorder">Fails only after a reboot</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/not-started-at-boot">Open in the interactive reference</a> · <a href="#not-started-at-boot">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="systemctl-access-denied">
         <p class="tag">Services</p>
@@ -355,7 +355,7 @@ sudo -l</code></pre>
         <ul><li>sudo systemctl restart ssh</li><li>For CI, a narrow sudoers rule for that exact command</li></ul>
         <h4>Prevent it</h4>
         <p>Grant exact commands in sudoers, not ALL.</p>
-        <p class="note">Practise it: <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a> · <a href="index.html#fix/systemctl-access-denied">Open in the interactive reference</a> · <a href="#systemctl-access-denied">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/systemctl-access-denied">Open in the interactive reference</a> · <a href="#systemctl-access-denied">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="start-limit-hit">
         <p class="tag">Services</p>
@@ -372,7 +372,7 @@ journalctl -u billing -n 50   # the first error is the real one</code></pre>
         <ul><li>Fix the cause, then sudo systemctl reset-failed billing &amp;&amp; sudo systemctl start billing</li></ul>
         <h4>Prevent it</h4>
         <p>Validate config before deploying it; use RestartSec= so retries are spaced out.</p>
-        <p class="note">Practise it: <a href="index.html#play/restartlimit">Start request repeated too quickly</a> · <a href="index.html#fix/start-limit-hit">Open in the interactive reference</a> · <a href="#start-limit-hit">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/restartlimit">Start request repeated too quickly</a>, then take <a href="index.html#path">Level 07 · Logs and failing services</a>. <a href="index.html#fix/start-limit-hit">Open in the interactive reference</a> · <a href="#start-limit-hit">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="address-in-use">
         <p class="tag">Services</p>
@@ -389,7 +389,7 @@ sudo lsof -i :80</code></pre>
         <ul><li>sudo systemctl disable --now apache2 (or apt remove it), then start nginx</li></ul>
         <h4>Prevent it</h4>
         <p>Watch what package installs pull in, and pin ports per service.</p>
-        <p class="note">Practise it: <a href="index.html#play/port">Address already in use</a> · <a href="index.html#fix/address-in-use">Open in the interactive reference</a> · <a href="#address-in-use">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/port">Address already in use</a>, then take <a href="index.html#path">Level 07 · Logs and failing services</a>. <a href="index.html#fix/address-in-use">Open in the interactive reference</a> · <a href="#address-in-use">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="job-failed-control-process">
         <p class="tag">Services</p>
@@ -406,7 +406,7 @@ sudo nginx -t</code></pre>
         <ul><li>Fix what the journal names, then start again</li></ul>
         <h4>Prevent it</h4>
         <p>Test configs (nginx -t, apachectl configtest) before reload.</p>
-        <p class="note">Practise it: <a href="index.html#play/port">Address already in use</a> · <a href="index.html#fix/job-failed-control-process">Open in the interactive reference</a> · <a href="#job-failed-control-process">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/port">Address already in use</a>, then take <a href="index.html#path">Level 07 · Logs and failing services</a>. <a href="index.html#fix/job-failed-control-process">Open in the interactive reference</a> · <a href="#job-failed-control-process">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="econnrefused-at-boot">
         <p class="tag">Services</p>
@@ -423,7 +423,7 @@ systemctl cat inventory | grep -E 'After|Wants|Requires'</code></pre>
         <ul><li>Drop-in: [Unit] After=postgresql.service Wants=postgresql.service; daemon-reload; reboot to test</li></ul>
         <h4>Prevent it</h4>
         <p>Declare every local dependency with After= plus Wants= or Requires=.</p>
-        <p class="note">Practise it: <a href="index.html#play/bootorder">Fails only after a reboot</a> · <a href="index.html#fix/econnrefused-at-boot">Open in the interactive reference</a> · <a href="#econnrefused-at-boot">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/bootorder">Fails only after a reboot</a>, then take <a href="index.html#path">Level 07 · Logs and failing services</a>. <a href="index.html#fix/econnrefused-at-boot">Open in the interactive reference</a> · <a href="#econnrefused-at-boot">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="no-installation-config">
         <p class="tag">Services</p>
@@ -439,7 +439,7 @@ systemctl cat inventory | grep -E 'After|Wants|Requires'</code></pre>
         <ul><li>Add [Install] WantedBy=multi-user.target, daemon-reload, enable</li></ul>
         <h4>Prevent it</h4>
         <p>Start unit files from a template that includes [Install].</p>
-        <p class="note">Practise it: <a href="index.html#play/notenabled">Gone after every reboot</a> · <a href="index.html#fix/no-installation-config">Open in the interactive reference</a> · <a href="#no-installation-config">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/notenabled">Gone after every reboot</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/no-installation-config">Open in the interactive reference</a> · <a href="#no-installation-config">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="cron-syntax-error">
         <p class="tag">Services</p>
@@ -456,7 +456,7 @@ cat /etc/cron.d/db-backup</code></pre>
         <ul><li>*/10 * * * * postgres pg_dump ...   # add the user</li></ul>
         <h4>Prevent it</h4>
         <p>Name cron.d files with letters, digits, - and _ only, and run each job as the user that owns the work.</p>
-        <p class="note">Practise it: <a href="index.html#play/cronuser">Cron job as the wrong user</a> · <a href="index.html#fix/cron-syntax-error">Open in the interactive reference</a> · <a href="#cron-syntax-error">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/cronuser">Cron job as the wrong user</a>, then take <a href="index.html#path">Level 08 · Scheduling with cron</a>. <a href="index.html#fix/cron-syntax-error">Open in the interactive reference</a> · <a href="#cron-syntax-error">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="crontab-missing-newline">
         <p class="tag">Services</p>
@@ -472,7 +472,7 @@ cat /etc/cron.d/db-backup</code></pre>
         <ul><li>echo &gt;&gt; file, then crontab file</li></ul>
         <h4>Prevent it</h4>
         <p>Use echo or a here-document when generating crontabs.</p>
-        <p class="note">Practise it: <a href="index.html#play/cronpath">Cron job that never works</a> · <a href="index.html#fix/crontab-missing-newline">Open in the interactive reference</a> · <a href="#crontab-missing-newline">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/cronpath">Cron job that never works</a>, then take <a href="index.html#path">Level 08 · Scheduling with cron</a>. <a href="index.html#fix/crontab-missing-newline">Open in the interactive reference</a> · <a href="#crontab-missing-newline">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="role-does-not-exist">
         <p class="tag">Services</p>
@@ -488,7 +488,7 @@ cat /etc/cron.d/db-backup</code></pre>
         <ul><li>Run the job as postgres: sudo -u postgres pg_dump ..., or user postgres in cron.d</li></ul>
         <h4>Prevent it</h4>
         <p>Give automation its own role and Linux user.</p>
-        <p class="note">Practise it: <a href="index.html#play/cronuser">Cron job as the wrong user</a> · <a href="index.html#fix/role-does-not-exist">Open in the interactive reference</a> · <a href="#role-does-not-exist">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/cronuser">Cron job as the wrong user</a>, then take <a href="index.html#path">Level 08 · Scheduling with cron</a>. <a href="index.html#fix/role-does-not-exist">Open in the interactive reference</a> · <a href="#role-does-not-exist">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="env-not-set-in-service">
         <p class="tag">Services</p>
@@ -505,7 +505,7 @@ sudo cat /proc/$(pgrep -o reports)/environ | tr '\0' '\n'</code></pre>
         <ul><li>A drop-in with Environment=NAME=value or EnvironmentFile=/etc/app/app.env, then daemon-reload and restart</li></ul>
         <h4>Prevent it</h4>
         <p>Keep a service's configuration in its unit or an EnvironmentFile under /etc, never in a login shell.</p>
-        <p class="note">Practise it: <a href="index.html#play/envmissing">Works in my shell, not as a service</a> · <a href="index.html#fix/env-not-set-in-service">Open in the interactive reference</a> · <a href="#env-not-set-in-service">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/envmissing">Works in my shell, not as a service</a>, then take <a href="index.html#path">Level 06 · systemd services</a>. <a href="index.html#fix/env-not-set-in-service">Open in the interactive reference</a> · <a href="#env-not-set-in-service">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Disks</h2>
       <section class="card fix problem" id="no-space-left">
@@ -525,7 +525,7 @@ sudo lsof +L1</code></pre>
         <ul><li>Delete or compress what you do not need, truncate runaway logs, restart processes holding deleted files</li></ul>
         <h4>Prevent it</h4>
         <p>Alert at 80%, rotate logs by size, keep data on its own volume.</p>
-        <p class="note">Practise it: <a href="index.html#play/deletedopen">Disk full, but du finds nothing</a> · <a href="index.html#play/runawaylog">A debug log filling the disk</a> · <a href="index.html#play/inodes">No space left, with space left</a> · <a href="index.html#fix/no-space-left">Open in the interactive reference</a> · <a href="#no-space-left">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/deletedopen">Disk full, but du finds nothing</a> · <a href="index.html#play/runawaylog">A debug log filling the disk</a> · <a href="index.html#play/inodes">No space left, with space left</a>, then take <a href="index.html#path">Level 09 · Disk space</a>. <a href="index.html#fix/no-space-left">Open in the interactive reference</a> · <a href="#no-space-left">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="df-du-mismatch">
         <p class="tag">Disks</p>
@@ -542,7 +542,7 @@ sudo du -xsh /</code></pre>
         <ul><li>sudo systemctl restart SERVICE, or sudo truncate -s 0 /proc/PID/fd/N</li></ul>
         <h4>Prevent it</h4>
         <p>Use logrotate copytruncate (or a reopen signal); never rm a log a process writes.</p>
-        <p class="note">Practise it: <a href="index.html#play/deletedopen">Disk full, but du finds nothing</a> · <a href="index.html#play/runawaylog">A debug log filling the disk</a> · <a href="index.html#fix/df-du-mismatch">Open in the interactive reference</a> · <a href="#df-du-mismatch">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/deletedopen">Disk full, but du finds nothing</a> · <a href="index.html#play/runawaylog">A debug log filling the disk</a>, then take <a href="index.html#path">Level 09 · Disk space</a>. <a href="index.html#fix/df-du-mismatch">Open in the interactive reference</a> · <a href="#df-du-mismatch">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="inodes-exhausted">
         <p class="tag">Disks</p>
@@ -559,7 +559,7 @@ sudo find / -xdev -type d -size +2M 2&gt;/dev/null</code></pre>
         <ul><li>sudo find DIR -type f -mmin +1440 -delete</li></ul>
         <h4>Prevent it</h4>
         <p>Schedule cleanup of session and cache folders; alert on inode use.</p>
-        <p class="note">Practise it: <a href="index.html#play/inodes">No space left, with space left</a> · <a href="index.html#fix/inodes-exhausted">Open in the interactive reference</a> · <a href="#inodes-exhausted">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/inodes">No space left, with space left</a>, then take <a href="index.html#path">Level 09 · Disk space</a>. <a href="index.html#fix/inodes-exhausted">Open in the interactive reference</a> · <a href="#inodes-exhausted">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="read-only-file-system">
         <p class="tag">Disks</p>
@@ -576,7 +576,7 @@ findmnt -no OPTIONS /data</code></pre>
         <ul><li>Stop writers, umount, fsck -y the device, mount again</li><li>In emergency mode: mount -o remount,rw /</li></ul>
         <h4>Prevent it</h4>
         <p>Watch dmesg and disk health; keep backups. Do not force rw on a damaged file system.</p>
-        <p class="note">Practise it: <a href="index.html#play/readonly">Read-only file system</a> · <a href="index.html#play/fstab">Emergency mode after an fstab change</a> · <a href="index.html#fix/read-only-file-system">Open in the interactive reference</a> · <a href="#read-only-file-system">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/readonly">Read-only file system</a> · <a href="index.html#play/fstab">Emergency mode after an fstab change</a>, then take <a href="index.html#path">Level 10 · Mounts and file systems</a>. <a href="index.html#fix/read-only-file-system">Open in the interactive reference</a> · <a href="#read-only-file-system">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="target-is-busy">
         <p class="tag">Disks</p>
@@ -593,7 +593,7 @@ sudo fuser -vm /data</code></pre>
         <ul><li>Stop the service, cd out, then umount</li></ul>
         <h4>Prevent it</h4>
         <p>RequiresMountsFor= in units makes the order explicit.</p>
-        <p class="note">Practise it: <a href="index.html#play/readonly">Read-only file system</a> · <a href="index.html#fix/target-is-busy">Open in the interactive reference</a> · <a href="#target-is-busy">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/readonly">Read-only file system</a>, then take <a href="index.html#path">Level 10 · Mounts and file systems</a>. <a href="index.html#fix/target-is-busy">Open in the interactive reference</a> · <a href="#target-is-busy">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="e2fsck-mounted">
         <p class="tag">Disks</p>
@@ -610,7 +610,7 @@ e2fsck: Cannot continue, aborting.</code></pre>
         <ul><li>Unmount first; for / use a rescue boot or fsck at boot</li></ul>
         <h4>Prevent it</h4>
         <p>Keep data on separate volumes you can unmount.</p>
-        <p class="note">Practise it: <a href="index.html#play/readonly">Read-only file system</a> · <a href="index.html#fix/e2fsck-mounted">Open in the interactive reference</a> · <a href="#e2fsck-mounted">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/readonly">Read-only file system</a>, then take <a href="index.html#path">Level 10 · Mounts and file systems</a>. <a href="index.html#fix/e2fsck-mounted">Open in the interactive reference</a> · <a href="#e2fsck-mounted">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="resize-nothing-to-do">
         <p class="tag">Disks</p>
@@ -626,7 +626,7 @@ e2fsck: Cannot continue, aborting.</code></pre>
         <ul><li>sudo growpart /dev/nvme0n1 1 &amp;&amp; sudo resize2fs /dev/nvme0n1p1 (xfs_growfs / for XFS)</li></ul>
         <h4>Prevent it</h4>
         <p>Script the three steps: volume, partition, file system.</p>
-        <p class="note">Practise it: <a href="index.html#play/growfs">The disk grew, the filesystem did not</a> · <a href="index.html#fix/resize-nothing-to-do">Open in the interactive reference</a> · <a href="#resize-nothing-to-do">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/growfs">The disk grew, the filesystem did not</a>, then take <a href="index.html#path">Level 10 · Mounts and file systems</a>. <a href="index.html#fix/resize-nothing-to-do">Open in the interactive reference</a> · <a href="#resize-nothing-to-do">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="emergency-mode">
         <p class="tag">Disks</p>
@@ -644,7 +644,7 @@ cat /etc/fstab</code></pre>
         <ul><li>mount -o remount,rw /, fix fstab, systemctl daemon-reload, mount -a, then systemctl default</li></ul>
         <h4>Prevent it</h4>
         <p>Run mount -a after every fstab change; use nofail for non-critical disks.</p>
-        <p class="note">Practise it: <a href="index.html#play/fstab">Emergency mode after an fstab change</a> · <a href="index.html#fix/emergency-mode">Open in the interactive reference</a> · <a href="#emergency-mode">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/fstab">Emergency mode after an fstab change</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/emergency-mode">Open in the interactive reference</a> · <a href="#emergency-mode">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="cant-find-uuid">
         <p class="tag">Disks</p>
@@ -661,7 +661,7 @@ lsblk -f</code></pre>
         <ul><li>Copy the UUID from blkid into /etc/fstab, then mount -a</li></ul>
         <h4>Prevent it</h4>
         <p>Paste UUIDs, never type them.</p>
-        <p class="note">Practise it: <a href="index.html#play/fstab">Emergency mode after an fstab change</a> · <a href="index.html#fix/cant-find-uuid">Open in the interactive reference</a> · <a href="#cant-find-uuid">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/fstab">Emergency mode after an fstab change</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/cant-find-uuid">Open in the interactive reference</a> · <a href="#cant-find-uuid">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="logrotate-insecure-permissions">
         <p class="tag">Disks</p>
@@ -679,7 +679,7 @@ journalctl -u logrotate</code></pre>
         <ul><li>Add <code>su orders orders</code> to the rule, or chmod 755 the folder; then logrotate -f to test</li></ul>
         <h4>Prevent it</h4>
         <p>Run logrotate -d after every new rule.</p>
-        <p class="note">Practise it: <a href="index.html#play/logrotate">logrotate is not rotating</a> · <a href="index.html#fix/logrotate-insecure-permissions">Open in the interactive reference</a> · <a href="#logrotate-insecure-permissions">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/logrotate">logrotate is not rotating</a>, then take <a href="index.html#path">Level 09 · Disk space</a>. <a href="index.html#fix/logrotate-insecure-permissions">Open in the interactive reference</a> · <a href="#logrotate-insecure-permissions">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="rotated-log-still-held">
         <p class="tag">Disks</p>
@@ -696,7 +696,7 @@ grep -E 'copytruncate|postrotate' /etc/logrotate.d/*</code></pre>
         <ul><li>Add copytruncate, or postrotate with the program's reload command; restart the program once to release the space</li></ul>
         <h4>Prevent it</h4>
         <p>For programs that cannot reopen logs, use copytruncate; better, log to the journal.</p>
-        <p class="note">Practise it: <a href="index.html#play/logrotate">logrotate is not rotating</a> · <a href="index.html#fix/rotated-log-still-held">Open in the interactive reference</a> · <a href="#rotated-log-still-held">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/logrotate">logrotate is not rotating</a>, then take <a href="index.html#path">Level 09 · Disk space</a>. <a href="index.html#fix/rotated-log-still-held">Open in the interactive reference</a> · <a href="#rotated-log-still-held">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="journal-disk-usage">
         <p class="tag">Disks</p>
@@ -713,7 +713,7 @@ sudo du -sh /var/log/journal</code></pre>
         <ul><li>sudo journalctl --vacuum-size=500M</li><li>SystemMaxUse=500M in /etc/systemd/journald.conf, then restart systemd-journald</li></ul>
         <h4>Prevent it</h4>
         <p>Cap the journal on every server image; ship logs off the box.</p>
-        <p class="note">Practise it: <a href="index.html#play/journalfull">The journal is eating the disk</a> · <a href="index.html#fix/journal-disk-usage">Open in the interactive reference</a> · <a href="#journal-disk-usage">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/journalfull">The journal is eating the disk</a>, then take <a href="index.html#path">Level 09 · Disk space</a>. <a href="index.html#fix/journal-disk-usage">Open in the interactive reference</a> · <a href="#journal-disk-usage">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="stale-file-handle">
         <p class="tag">Disks</p>
@@ -730,7 +730,7 @@ df -h 2&gt;&amp;1 | grep -i stale</code></pre>
         <ul><li>sudo umount -l /mnt/shared &amp;&amp; sudo mount /mnt/shared</li></ul>
         <h4>Prevent it</h4>
         <p>Coordinate NFS server changes with the clients; remount after restores.</p>
-        <p class="note">Practise it: <a href="index.html#play/nfsstale">Stale file handle</a> · <a href="index.html#fix/stale-file-handle">Open in the interactive reference</a> · <a href="#stale-file-handle">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/nfsstale">Stale file handle</a>, then take <a href="index.html#path">Level 10 · Mounts and file systems</a>. <a href="index.html#fix/stale-file-handle">Open in the interactive reference</a> · <a href="#stale-file-handle">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Networking</h2>
       <section class="card fix problem" id="could-not-resolve">
@@ -749,7 +749,7 @@ dig @10.0.0.2 example.com</code></pre>
         <ul><li>Point resolv.conf (or netplan nameservers) at a working resolver</li></ul>
         <h4>Prevent it</h4>
         <p>Manage DNS settings in one place (netplan, DHCP) and monitor resolution.</p>
-        <p class="note">Practise it: <a href="index.html#play/dns">Temporary failure in name resolution</a> · <a href="index.html#play/route">Network is unreachable</a> · <a href="index.html#fix/could-not-resolve">Open in the interactive reference</a> · <a href="#could-not-resolve">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/dns">Temporary failure in name resolution</a> · <a href="index.html#play/route">Network is unreachable</a>, then take <a href="index.html#path">Level 11 · Networking</a>. <a href="index.html#fix/could-not-resolve">Open in the interactive reference</a> · <a href="#could-not-resolve">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="dig-vs-getent">
         <p class="tag">Networking</p>
@@ -767,7 +767,7 @@ grep db.internal /etc/hosts</code></pre>
         <ul><li>Remove the stale /etc/hosts line</li></ul>
         <h4>Prevent it</h4>
         <p>Keep /etc/hosts minimal; use DNS with sensible TTLs.</p>
-        <p class="note">Practise it: <a href="index.html#play/hosts">dig is right, the app is wrong</a> · <a href="index.html#fix/dig-vs-getent">Open in the interactive reference</a> · <a href="#dig-vs-getent">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/hosts">dig is right, the app is wrong</a>, then take <a href="index.html#path">Level 11 · Networking</a>. <a href="index.html#fix/dig-vs-getent">Open in the interactive reference</a> · <a href="#dig-vs-getent">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="network-unreachable">
         <p class="tag">Networking</p>
@@ -784,7 +784,7 @@ ip -br a</code></pre>
         <ul><li>sudo ip route add default via 10.0.1.1 dev eth0 (persist in netplan)</li></ul>
         <h4>Prevent it</h4>
         <p>Change routes through netplan or DHCP, not by hand.</p>
-        <p class="note">Practise it: <a href="index.html#play/route">Network is unreachable</a> · <a href="index.html#fix/network-unreachable">Open in the interactive reference</a> · <a href="#network-unreachable">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/route">Network is unreachable</a>, then take <a href="index.html#path">Level 11 · Networking</a>. <a href="index.html#fix/network-unreachable">Open in the interactive reference</a> · <a href="#network-unreachable">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="nexthop-invalid-gateway">
         <p class="tag">Networking</p>
@@ -801,7 +801,7 @@ ip route</code></pre>
         <ul><li>Use the gateway inside your subnet (usually .1)</li></ul>
         <h4>Prevent it</h4>
         <p>Check the subnet before adding routes.</p>
-        <p class="note">Practise it: <a href="index.html#play/route">Network is unreachable</a> · <a href="index.html#fix/nexthop-invalid-gateway">Open in the interactive reference</a> · <a href="#nexthop-invalid-gateway">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/route">Network is unreachable</a>, then take <a href="index.html#path">Level 11 · Networking</a>. <a href="index.html#fix/nexthop-invalid-gateway">Open in the interactive reference</a> · <a href="#nexthop-invalid-gateway">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="connection-timed-out">
         <p class="tag">Networking</p>
@@ -819,7 +819,7 @@ curl -v localhost:8080</code></pre>
         <ul><li>sudo ufw allow from 10.0.1.0/24 to any port 8080</li></ul>
         <h4>Prevent it</h4>
         <p>Open ports in the same change that adds the service.</p>
-        <p class="note">Practise it: <a href="index.html#play/firewall">Works locally, not from the load balancer</a> · <a href="index.html#fix/connection-timed-out">Open in the interactive reference</a> · <a href="#connection-timed-out">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/firewall">Works locally, not from the load balancer</a>, then take <a href="index.html#path">Level 11 · Networking</a>. <a href="index.html#fix/connection-timed-out">Open in the interactive reference</a> · <a href="#connection-timed-out">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="connection-refused">
         <p class="tag">Networking</p>
@@ -836,7 +836,7 @@ systemctl status SERVICE</code></pre>
         <ul><li>Start the service, or bind it to 0.0.0.0 (or the private IP) and restart</li></ul>
         <h4>Prevent it</h4>
         <p>Check the Local Address column after every deploy.</p>
-        <p class="note">Practise it: <a href="index.html#play/listenlocal">Listening on 127.0.0.1 only</a> · <a href="index.html#fix/connection-refused">Open in the interactive reference</a> · <a href="#connection-refused">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/listenlocal">Listening on 127.0.0.1 only</a>, then take <a href="index.html#path">Level 11 · Networking</a>. <a href="index.html#fix/connection-refused">Open in the interactive reference</a> · <a href="#connection-refused">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="unable-to-resolve-host">
         <p class="tag">Networking</p>
@@ -853,7 +853,7 @@ getent hosts $(hostname)</code></pre>
         <ul><li>sudo sed -i 's/old-name/new-name/' /etc/hosts</li></ul>
         <h4>Prevent it</h4>
         <p>Rename with a script that updates /etc/hostname and /etc/hosts together.</p>
-        <p class="note">Practise it: <a href="index.html#play/hostname">sudo: unable to resolve host</a> · <a href="index.html#fix/unable-to-resolve-host">Open in the interactive reference</a> · <a href="#unable-to-resolve-host">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/hostname">sudo: unable to resolve host</a>, then take <a href="index.html#path">Level 11 · Networking</a>. <a href="index.html#fix/unable-to-resolve-host">Open in the interactive reference</a> · <a href="#unable-to-resolve-host">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="cert-not-yet-valid">
         <p class="tag">Networking</p>
@@ -870,7 +870,7 @@ timedatectl</code></pre>
         <ul><li>sudo timedatectl set-ntp true</li></ul>
         <h4>Prevent it</h4>
         <p>Run an NTP client on every machine; alert on clock offset.</p>
-        <p class="note">Practise it: <a href="index.html#play/time">Certificate is not yet valid</a> · <a href="index.html#fix/cert-not-yet-valid">Open in the interactive reference</a> · <a href="#cert-not-yet-valid">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/time">Certificate is not yet valid</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/cert-not-yet-valid">Open in the interactive reference</a> · <a href="#cert-not-yet-valid">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Users and security</h2>
       <section class="card fix problem" id="not-in-sudoers">
@@ -888,7 +888,7 @@ sudo -l -U alice</code></pre>
         <ul><li>sudo usermod -aG sudo alice, or a narrow rule in /etc/sudoers.d via visudo</li></ul>
         <h4>Prevent it</h4>
         <p>Grant admin rights through a group, reviewed regularly.</p>
-        <p class="note">Practise it: <a href="index.html#play/groups">Added to a group, lost the others</a> · <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a> · <a href="index.html#fix/not-in-sudoers">Open in the interactive reference</a> · <a href="#not-in-sudoers">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/groups">Added to a group, lost the others</a> · <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a>, then take <a href="index.html#path">Level 04 · Users, groups and sudo</a>. <a href="index.html#fix/not-in-sudoers">Open in the interactive reference</a> · <a href="#not-in-sudoers">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="sudo-not-allowed">
         <p class="tag">Users and security</p>
@@ -904,7 +904,7 @@ sudo -l -U alice</code></pre>
         <ul><li>Update the rule to the exact command, check with visudo -c</li></ul>
         <h4>Prevent it</h4>
         <p>Keep CI sudo rules in version control, next to the units they restart.</p>
-        <p class="note">Practise it: <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a> · <a href="index.html#fix/sudo-not-allowed">Open in the interactive reference</a> · <a href="#sudo-not-allowed">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sudocmd">Sorry, user deploy is not allowed to execute</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/sudo-not-allowed">Open in the interactive reference</a> · <a href="#sudo-not-allowed">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="sudoers-parse-error">
         <p class="tag">Users and security</p>
@@ -920,7 +920,7 @@ sudo -l -U alice</code></pre>
         <ul><li>Fix the file as root (console, rescue, pkexec), chmod 440, visudo -c</li></ul>
         <h4>Prevent it</h4>
         <p>Edit only with visudo -f; keep a root session open while testing.</p>
-        <p class="note">Practise it: <a href="index.html#play/sudoers">sudo: parse error in sudoers</a> · <a href="index.html#fix/sudoers-parse-error">Open in the interactive reference</a> · <a href="#sudoers-parse-error">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sudoers">sudo: parse error in sudoers</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/sudoers-parse-error">Open in the interactive reference</a> · <a href="#sudoers-parse-error">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="unprotected-private-key">
         <p class="tag">Users and security</p>
@@ -936,7 +936,7 @@ sudo -l -U alice</code></pre>
         <ul><li>chmod 600 ~/.ssh/id_ed25519</li></ul>
         <h4>Prevent it</h4>
         <p>Copy keys with install -m 600, not cp.</p>
-        <p class="note">Practise it: <a href="index.html#play/sshkey">UNPROTECTED PRIVATE KEY FILE</a> · <a href="index.html#fix/unprotected-private-key">Open in the interactive reference</a> · <a href="#unprotected-private-key">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sshkey">UNPROTECTED PRIVATE KEY FILE</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/unprotected-private-key">Open in the interactive reference</a> · <a href="#unprotected-private-key">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="permission-denied-publickey">
         <p class="tag">Users and security</p>
@@ -953,7 +953,7 @@ sudo journalctl -u ssh -n 20   # on the server</code></pre>
         <ul><li>Fix modes on both ends: key 600, ~/.ssh 700, authorized_keys 600</li></ul>
         <h4>Prevent it</h4>
         <p>Distribute keys with configuration management.</p>
-        <p class="note">Practise it: <a href="index.html#play/sshkey">UNPROTECTED PRIVATE KEY FILE</a> · <a href="index.html#play/sshauth">Authentication refused: bad ownership or modes</a> · <a href="index.html#fix/permission-denied-publickey">Open in the interactive reference</a> · <a href="#permission-denied-publickey">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sshkey">UNPROTECTED PRIVATE KEY FILE</a> · <a href="index.html#play/sshauth">Authentication refused: bad ownership or modes</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/permission-denied-publickey">Open in the interactive reference</a> · <a href="#permission-denied-publickey">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="bad-ownership-or-modes">
         <p class="tag">Users and security</p>
@@ -970,7 +970,7 @@ ls -l /home/deploy/.ssh</code></pre>
         <ul><li>chmod 755 home (or 750), 700 ~/.ssh, 600 authorized_keys</li></ul>
         <h4>Prevent it</h4>
         <p>Never chmod -R a home folder.</p>
-        <p class="note">Practise it: <a href="index.html#play/sshauth">Authentication refused: bad ownership or modes</a> · <a href="index.html#fix/bad-ownership-or-modes">Open in the interactive reference</a> · <a href="#bad-ownership-or-modes">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/sshauth">Authentication refused: bad ownership or modes</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/bad-ownership-or-modes">Open in the interactive reference</a> · <a href="#bad-ownership-or-modes">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="world-readable-secret">
         <p class="tag">Users and security</p>
@@ -987,7 +987,7 @@ systemctl show -p User payments</code></pre>
         <ul><li>sudo chown root:payments FILE &amp;&amp; sudo chmod 640 FILE, then restart the service to prove it still reads it</li></ul>
         <h4>Prevent it</h4>
         <p>Install secrets with install -m 640 -o root -g SERVICE, or use a secrets manager.</p>
-        <p class="note">Practise it: <a href="index.html#play/secretperm">A world-readable secrets file</a> · <a href="index.html#fix/world-readable-secret">Open in the interactive reference</a> · <a href="#world-readable-secret">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/secretperm">A world-readable secrets file</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/world-readable-secret">Open in the interactive reference</a> · <a href="#world-readable-secret">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="service-on-all-interfaces">
         <p class="tag">Users and security</p>
@@ -1003,7 +1003,7 @@ systemctl show -p User payments</code></pre>
         <ul><li>Bind to 127.0.0.1 (or the private interface), require auth, restart</li></ul>
         <h4>Prevent it</h4>
         <p>Review ss -tlnp in every security check; keep a firewall as a second layer.</p>
-        <p class="note">Practise it: <a href="index.html#play/exposedport">Redis open to the network</a> · <a href="index.html#fix/service-on-all-interfaces">Open in the interactive reference</a> · <a href="#service-on-all-interfaces">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/exposedport">Redis open to the network</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/service-on-all-interfaces">Open in the interactive reference</a> · <a href="#service-on-all-interfaces">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="usermod-lost-groups">
         <p class="tag">Users and security</p>
@@ -1020,7 +1020,7 @@ grep alice /etc/group</code></pre>
         <ul><li>sudo usermod -aG docker alice   # add back what was lost</li></ul>
         <h4>Prevent it</h4>
         <p>Always use usermod -aG (or gpasswd -a).</p>
-        <p class="note">Practise it: <a href="index.html#play/groups">Added to a group, lost the others</a> · <a href="index.html#fix/usermod-lost-groups">Open in the interactive reference</a> · <a href="#usermod-lost-groups">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/groups">Added to a group, lost the others</a>, then take <a href="index.html#path">Level 04 · Users, groups and sudo</a>. <a href="index.html#fix/usermod-lost-groups">Open in the interactive reference</a> · <a href="#usermod-lost-groups">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="ssh-brute-force">
         <p class="tag">Users and security</p>
@@ -1037,7 +1037,7 @@ sudo grep -c 'Failed password' /var/log/auth.log</code></pre>
         <ul><li>PasswordAuthentication no in the file sshd -T shows wins; sshd -t; systemctl reload ssh</li><li>sudo apt install fail2ban (sshd jail is on by default)</li></ul>
         <h4>Prevent it</h4>
         <p>Keys only, no root login, fail2ban, and ideally SSH only from a VPN or bastion.</p>
-        <p class="note">Practise it: <a href="index.html#play/bruteforce">SSH brute force</a> · <a href="index.html#fix/ssh-brute-force">Open in the interactive reference</a> · <a href="#ssh-brute-force">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/bruteforce">SSH brute force</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/ssh-brute-force">Open in the interactive reference</a> · <a href="#ssh-brute-force">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="certificate-expired">
         <p class="tag">Users and security</p>
@@ -1055,7 +1055,7 @@ systemctl list-timers | grep certbot</code></pre>
         <ul><li>sudo certbot renew &amp;&amp; sudo systemctl reload nginx</li><li>sudo systemctl enable --now certbot.timer</li></ul>
         <h4>Prevent it</h4>
         <p>Monitor the expiry of what is served (openssl s_client), not just that renewal ran.</p>
-        <p class="note">Practise it: <a href="index.html#play/certexpired">certificate has expired</a> · <a href="index.html#fix/certificate-expired">Open in the interactive reference</a> · <a href="#certificate-expired">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/certexpired">certificate has expired</a>, then take <a href="index.html#path">Level 12 · Security hardening</a>. <a href="index.html#fix/certificate-expired">Open in the interactive reference</a> · <a href="#certificate-expired">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Boot, kernel and packages</h2>
       <section class="card fix problem" id="dpkg-lock">
@@ -1073,7 +1073,7 @@ systemctl status unattended-upgrades</code></pre>
         <ul><li>Wait for it to finish; then retry. Never delete lock files.</li></ul>
         <h4>Prevent it</h4>
         <p>In automation, wait for the lock (apt-get -o DPkg::Lock::Timeout=300).</p>
-        <p class="note">Practise it: <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a> · <a href="index.html#fix/dpkg-lock">Open in the interactive reference</a> · <a href="#dpkg-lock">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/dpkg-lock">Open in the interactive reference</a> · <a href="#dpkg-lock">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="dpkg-interrupted">
         <p class="tag">Boot, kernel and packages</p>
@@ -1089,7 +1089,7 @@ systemctl status unattended-upgrades</code></pre>
         <ul><li>sudo dpkg --configure -a, then sudo apt -f install</li></ul>
         <h4>Prevent it</h4>
         <p>Do not kill apt or delete its locks.</p>
-        <p class="note">Practise it: <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a> · <a href="index.html#fix/dpkg-interrupted">Open in the interactive reference</a> · <a href="#dpkg-interrupted">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/dpkglock">Could not get lock /var/lib/dpkg/lock-frontend</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/dpkg-interrupted">Open in the interactive reference</a> · <a href="#dpkg-interrupted">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="release-not-valid-yet">
         <p class="tag">Boot, kernel and packages</p>
@@ -1105,7 +1105,7 @@ systemctl status unattended-upgrades</code></pre>
         <ul><li>sudo timedatectl set-ntp true</li></ul>
         <h4>Prevent it</h4>
         <p>Keep NTP on everywhere; snapshots restored to VMs often have old clocks.</p>
-        <p class="note">Practise it: <a href="index.html#play/time">Certificate is not yet valid</a> · <a href="index.html#fix/release-not-valid-yet">Open in the interactive reference</a> · <a href="#release-not-valid-yet">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/time">Certificate is not yet valid</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/release-not-valid-yet">Open in the interactive reference</a> · <a href="#release-not-valid-yet">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="reboot-required">
         <p class="tag">Boot, kernel and packages</p>
@@ -1122,7 +1122,7 @@ cat /run/reboot-required.pkgs</code></pre>
         <ul><li>Reboot in a window; check systemctl --failed afterwards</li></ul>
         <h4>Prevent it</h4>
         <p>Schedule reboots (or livepatch) as part of patching.</p>
-        <p class="note">Practise it: <a href="index.html#play/rebootrequired">Patched, but still vulnerable</a> · <a href="index.html#fix/reboot-required">Open in the interactive reference</a> · <a href="#reboot-required">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/rebootrequired">Patched, but still vulnerable</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/reboot-required">Open in the interactive reference</a> · <a href="#reboot-required">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="ip-forward-off">
         <p class="tag">Boot, kernel and packages</p>
@@ -1139,7 +1139,7 @@ grep -r ip_forward /etc/sysctl.conf /etc/sysctl.d</code></pre>
         <ul><li>echo 'net.ipv4.ip_forward=1' | sudo tee /etc/sysctl.d/99-forward.conf &amp;&amp; sudo sysctl --system</li></ul>
         <h4>Prevent it</h4>
         <p>Persist every kernel setting in /etc/sysctl.d, and reboot-test.</p>
-        <p class="note">Practise it: <a href="index.html#play/ipforward">The NAT gateway stopped routing</a> · <a href="index.html#fix/ip-forward-off">Open in the interactive reference</a> · <a href="#ip-forward-off">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/ipforward">The NAT gateway stopped routing</a>, then take <a href="index.html#path">Level 13 · Boot, kernel and packages</a>. <a href="index.html#fix/ip-forward-off">Open in the interactive reference</a> · <a href="#ip-forward-off">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Rocky Linux and RHEL</h2>
       <section class="card fix problem" id="dnf-no-match">
@@ -1158,7 +1158,7 @@ dnf provides '*/htop'</code></pre>
         <ul><li>sudo dnf install -y epel-release, then install again</li></ul>
         <h4>Prevent it</h4>
         <p>Enable the repositories you rely on in the server image.</p>
-        <p class="note">Practise it: <a href="index.html#play/dnfepel">dnf: Unable to find a match</a> · <a href="index.html#fix/dnf-no-match">Open in the interactive reference</a> · <a href="#dnf-no-match">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/dnfepel">dnf: Unable to find a match</a>, then take <a href="index.html#path">Level 16 · Rocky Linux and RHEL</a>. <a href="index.html#fix/dnf-no-match">Open in the interactive reference</a> · <a href="#dnf-no-match">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="selinux-avc-denied">
         <p class="tag">Rocky Linux and RHEL</p>
@@ -1176,7 +1176,7 @@ sudo ausearch -m avc -ts recent</code></pre>
         <ul><li>sudo semanage fcontext -a -t httpd_sys_content_t '/srv/shop(/.*)?' &amp;&amp; sudo restorecon -Rv /srv/shop</li></ul>
         <h4>Prevent it</h4>
         <p>Never setenforce 0 as a fix; use cp (not mv) into labelled places, or define fcontext rules for custom paths.</p>
-        <p class="note">Practise it: <a href="index.html#play/selinux">403 with correct permissions: SELinux</a> · <a href="index.html#fix/selinux-avc-denied">Open in the interactive reference</a> · <a href="#selinux-avc-denied">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/selinux">403 with correct permissions: SELinux</a>, then take <a href="index.html#path">Level 16 · Rocky Linux and RHEL</a>. <a href="index.html#fix/selinux-avc-denied">Open in the interactive reference</a> · <a href="#selinux-avc-denied">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="bind-permission-denied-selinux">
         <p class="tag">Rocky Linux and RHEL</p>
@@ -1193,7 +1193,7 @@ sudo semanage port -l | grep http_port_t</code></pre>
         <ul><li>sudo semanage port -a -t http_port_t -p tcp 8090</li></ul>
         <h4>Prevent it</h4>
         <p>Include port labels in provisioning when you use non-standard ports.</p>
-        <p class="note">Practise it: <a href="index.html#play/selinuxport">bind() failed (13: Permission denied)</a> · <a href="index.html#fix/bind-permission-denied-selinux">Open in the interactive reference</a> · <a href="#bind-permission-denied-selinux">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/selinuxport">bind() failed (13: Permission denied)</a>, then take <a href="index.html#path">Level 16 · Rocky Linux and RHEL</a>. <a href="index.html#fix/bind-permission-denied-selinux">Open in the interactive reference</a> · <a href="#bind-permission-denied-selinux">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="firewalld-blocks">
         <p class="tag">Rocky Linux and RHEL</p>
@@ -1210,7 +1210,7 @@ sudo firewall-cmd --permanent --list-ports</code></pre>
         <ul><li>sudo firewall-cmd --permanent --add-port=8080/tcp &amp;&amp; sudo firewall-cmd --reload</li></ul>
         <h4>Prevent it</h4>
         <p>Always use --permanent plus --reload (or --runtime-to-permanent).</p>
-        <p class="note">Practise it: <a href="index.html#play/firewalld">firewalld blocks the new port</a> · <a href="index.html#fix/firewalld-blocks">Open in the interactive reference</a> · <a href="#firewalld-blocks">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/firewalld">firewalld blocks the new port</a>, then take <a href="index.html#path">Level 16 · Rocky Linux and RHEL</a>. <a href="index.html#fix/firewalld-blocks">Open in the interactive reference</a> · <a href="#firewalld-blocks">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="resize2fs-bad-magic">
         <p class="tag">Rocky Linux and RHEL</p>
@@ -1227,7 +1227,7 @@ lsblk -f</code></pre>
         <ul><li>sudo xfs_growfs /   # or lvextend -r next time</li></ul>
         <h4>Prevent it</h4>
         <p>Use lvextend -r, which picks the right tool for the file system.</p>
-        <p class="note">Practise it: <a href="index.html#play/lvm">Grow / on LVM and XFS</a> · <a href="index.html#fix/resize2fs-bad-magic">Open in the interactive reference</a> · <a href="#resize2fs-bad-magic">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/lvm">Grow / on LVM and XFS</a>, then take <a href="index.html#path">Level 16 · Rocky Linux and RHEL</a>. <a href="index.html#fix/resize2fs-bad-magic">Open in the interactive reference</a> · <a href="#resize2fs-bad-magic">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="lvextend-insufficient-space">
         <p class="tag">Rocky Linux and RHEL</p>
@@ -1244,7 +1244,7 @@ sudo pvs</code></pre>
         <ul><li>Ask for less (-l +100%FREE), or add a disk: pvcreate, vgextend, then lvextend -r</li></ul>
         <h4>Prevent it</h4>
         <p>Watch VFree; plan growth per volume.</p>
-        <p class="note">Practise it: <a href="index.html#play/lvm">Grow / on LVM and XFS</a> · <a href="index.html#fix/lvextend-insufficient-space">Open in the interactive reference</a> · <a href="#lvextend-insufficient-space">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/lvm">Grow / on LVM and XFS</a>, then take <a href="index.html#path">Level 16 · Rocky Linux and RHEL</a>. <a href="index.html#fix/lvextend-insufficient-space">Open in the interactive reference</a> · <a href="#lvextend-insufficient-space">Link to this answer</a></p>
       </section>
     <h2 class="section-title">Performance</h2>
       <section class="card fix problem" id="nfs-not-responding">
@@ -1263,7 +1263,7 @@ df -hl   # skips network mounts</code></pre>
         <ul><li>sudo umount -f -l /mnt/reports, then fix or remove its fstab line</li></ul>
         <h4>Prevent it</h4>
         <p>Mount non-essential shares with _netdev,nofail and x-systemd.automount; use df -l in scripts and monitoring.</p>
-        <p class="note">Practise it: <a href="index.html#play/nfshang">High load, idle CPU: a hung NFS mount</a> · <a href="index.html#fix/nfs-not-responding">Open in the interactive reference</a> · <a href="#nfs-not-responding">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/nfshang">High load, idle CPU: a hung NFS mount</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/nfs-not-responding">Open in the interactive reference</a> · <a href="#nfs-not-responding">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="memory-leak">
         <p class="tag">Performance</p>
@@ -1281,7 +1281,7 @@ smem -k -r | head</code></pre>
         <ul><li>Contain it: systemctl set-property NAME MemoryMax=1G with Restart=always; report the leak with the numbers</li></ul>
         <h4>Prevent it</h4>
         <p>MemoryMax= on every service; alert on RSS growth, not only on free memory.</p>
-        <p class="note">Practise it: <a href="index.html#play/memleak">A slow memory leak</a> · <a href="index.html#fix/memory-leak">Open in the interactive reference</a> · <a href="#memory-leak">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/memleak">A slow memory leak</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/memory-leak">Open in the interactive reference</a> · <a href="#memory-leak">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="swapon-read-header">
         <p class="tag">Performance</p>
@@ -1298,7 +1298,7 @@ ls -l /swapfile</code></pre>
         <ul><li>sudo chmod 600 /swapfile &amp;&amp; sudo mkswap /swapfile &amp;&amp; sudo swapon /swapfile, then a line in /etc/fstab</li></ul>
         <h4>Prevent it</h4>
         <p>Script swap creation: fallocate, chmod 600, mkswap, swapon, fstab.</p>
-        <p class="note">Practise it: <a href="index.html#play/swapfile">No swap, and memory is tight</a> · <a href="index.html#fix/swapon-read-header">Open in the interactive reference</a> · <a href="#swapon-read-header">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/swapfile">No swap, and memory is tight</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/swapon-read-header">Open in the interactive reference</a> · <a href="#swapon-read-header">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="swap-insecure-permissions">
         <p class="tag">Performance</p>
@@ -1314,7 +1314,7 @@ ls -l /swapfile</code></pre>
         <ul><li>sudo chmod 600 /swapfile</li></ul>
         <h4>Prevent it</h4>
         <p>chmod 600 before mkswap.</p>
-        <p class="note">Practise it: <a href="index.html#play/swapfile">No swap, and memory is tight</a> · <a href="index.html#fix/swap-insecure-permissions">Open in the interactive reference</a> · <a href="#swap-insecure-permissions">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/swapfile">No swap, and memory is tight</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/swap-insecure-permissions">Open in the interactive reference</a> · <a href="#swap-insecure-permissions">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="high-load-iowait">
         <p class="tag">Performance</p>
@@ -1333,7 +1333,7 @@ ps -eo pid,stat,cmd | grep ' D'</code></pre>
         <ul><li>sudo ionice -c3 -p PID for the I/O hog, or reschedule it</li></ul>
         <h4>Prevent it</h4>
         <p>Run backups with ionice -c3 nice -n19, off-peak, or on a separate disk.</p>
-        <p class="note">Practise it: <a href="index.html#play/iowait">High load, idle CPU</a> · <a href="index.html#fix/high-load-iowait">Open in the interactive reference</a> · <a href="#high-load-iowait">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/iowait">High load, idle CPU</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/high-load-iowait">Open in the interactive reference</a> · <a href="#high-load-iowait">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="swap-thrashing">
         <p class="tag">Performance</p>
@@ -1351,7 +1351,7 @@ top -o %MEM</code></pre>
         <ul><li>Cap the hog: sudo systemctl set-property NAME MemoryMax=1G, or stop it</li></ul>
         <h4>Prevent it</h4>
         <p>Set MemoryMax= per service; alert on swap-in rate.</p>
-        <p class="note">Practise it: <a href="index.html#play/swap">Swap thrashing</a> · <a href="index.html#fix/swap-thrashing">Open in the interactive reference</a> · <a href="#swap-thrashing">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/swap">Swap thrashing</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/swap-thrashing">Open in the interactive reference</a> · <a href="#swap-thrashing">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="status-9-kill">
         <p class="tag">Performance</p>
@@ -1368,7 +1368,7 @@ sudo dmesg | grep -i oom</code></pre>
         <ul><li>Fit the service to memory (heap, workers), or give it more</li></ul>
         <h4>Prevent it</h4>
         <p>Never protect one service with oom_score_adj at the cost of the database.</p>
-        <p class="note">Practise it: <a href="index.html#play/oom">Killed by the OOM killer</a> · <a href="index.html#fix/status-9-kill">Open in the interactive reference</a> · <a href="#status-9-kill">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/oom">Killed by the OOM killer</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/status-9-kill">Open in the interactive reference</a> · <a href="#status-9-kill">Link to this answer</a></p>
       </section>
       <section class="card fix problem" id="too-many-open-files">
         <p class="tag">Performance</p>
@@ -1385,7 +1385,7 @@ ls /proc/$(pgrep -o gateway)/fd | wc -l</code></pre>
         <ul><li>Drop-in [Service] LimitNOFILE=65535, daemon-reload, restart</li></ul>
         <h4>Prevent it</h4>
         <p>limits.conf does not apply to services: set LimitNOFILE= in the unit.</p>
-        <p class="note">Practise it: <a href="index.html#play/ulimit">Too many open files</a> · <a href="index.html#fix/too-many-open-files">Open in the interactive reference</a> · <a href="#too-many-open-files">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in <a href="index.html#play/ulimit">Too many open files</a>, then take <a href="index.html#path">Level 14 · Performance</a>. <a href="index.html#fix/too-many-open-files">Open in the interactive reference</a> · <a href="#too-many-open-files">Link to this answer</a></p>
       </section>
   </main>
   <footer class="foot">

@@ -22,7 +22,9 @@ function problems() {
   const { Q, titles } = load();
   const groups = [...new Set(Q.doctor.map((d) => d.group))];
   const list = (items) => `<ul>${items.map((t) => `<li>${rich(t)}</li>`).join("")}</ul>`;
-  const entry = (d) => `
+  const entry = (d) => {
+    const lv = Q.levels.find((l) => l.id === d.level);
+    return `
       <section class="card fix problem" id="${d.id}">
         <p class="tag">${esc(d.group)}</p>
         <h3>${esc(d.title)}</h3>
@@ -37,8 +39,9 @@ function problems() {
         ${list(d.fix)}
         <h4>Prevent it</h4>
         <p>${rich(d.prevent)}</p>
-        <p class="note">Practise it: ${d.scenarios.map((id) => `<a href="index.html#play/${id}">${esc(titles[id])}</a>`).join(" · ")} · <a href="index.html#fix/${d.id}">Open in the interactive reference</a> · <a href="#${d.id}">Link to this answer</a></p>
+        <p class="note"><strong>Now learn it:</strong> break and fix it yourself in ${d.scenarios.map((id) => `<a href="index.html#play/${id}">${esc(titles[id])}</a>`).join(" · ")}, then take <a href="index.html#path">Level ${lv.id} · ${esc(lv.title)}</a>. <a href="index.html#fix/${d.id}">Open in the interactive reference</a> · <a href="#${d.id}">Link to this answer</a></p>
       </section>`;
+  };
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -64,7 +67,7 @@ function problems() {
   </header>
   <main class="wrap problems">
     <h1 class="big-title">Linux errors and how to fix them</h1>
-    <p class="lede">${Q.doctor.length} error messages and symptoms from real servers. Each answer gives the exact message, why it happens, how to confirm it, the fix, how to prevent it, and a scenario to practise it in the <a href="index.html#path">playground</a>. Generated from the site's data; the <a href="index.html#doctor">interactive reference</a> adds search by pasted error text.</p>
+    <p class="lede">${Q.doctor.length} error messages and symptoms from real servers. Each answer gives the exact message, why it happens, how to confirm it, the fix, how to prevent it, and then a scenario to break and fix it yourself in the <a href="index.html#path">playground</a>. Generated from the site's data; the <a href="index.html#doctor">interactive reference</a> adds search by pasted error text.</p>
     <nav class="card toc" aria-label="Problems">
 ${groups.map((g) => `      <h2>${esc(g)}</h2>\n      <ul>${Q.doctor.filter((d) => d.group === g).map((d) => `<li><a href="#${d.id}">${esc(d.title)}</a></li>`).join("")}</ul>`).join("\n")}
     </nav>

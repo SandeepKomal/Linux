@@ -324,8 +324,12 @@
       h("h4", null, "Confirm it"), h("pre", null, h("code", null, d.confirm.join("\n"))),
       h("h4", null, "Fix it"), list(d.fix),
       h("h4", null, "Prevent it"), h("p", null, ...rich(d.prevent)),
-      practiseRow(d.scenarios, "Practise it:"),
-      lv ? h("p.note", null, "Learn more: ", h("a", { href: "#path", onclick: () => setTimeout(() => scrollToEl(document.getElementById(stageId(lv.stage))), 0) }, `Level ${lv.id} · ${lv.title}`)) : null));
+      // Fixing is the way in; the point is to learn it, so every answer ends in practice.
+      h("div.learn-it", null,
+        h("h4", null, "Now learn it"),
+        h("p", null, "Break this yourself in a safe playground and fix it. Doing it once is what makes you recognise it next time."),
+        practiseRow(d.scenarios, "Practise:"),
+        lv ? h("p.note", null, "Then the level that teaches it: ", h("a", { href: "#path", onclick: (e) => { e.preventDefault(); go("path", () => scrollToEl(document.getElementById(stageId(lv.stage)))); } }, `Level ${lv.id} · ${lv.title}`)) : null)));
     document.querySelectorAll("#doctor-list a.chip").forEach((a) => { if (a.getAttribute("href") === "#fix/" + id) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
     requestAnimationFrame(() => scrollToEl($("#doctor-out")));
   }
@@ -403,7 +407,7 @@
     { label: "Your path", kind: "Section", run: () => go("path", () => scrollToEl($("#path-title"))) },
     { label: "Exam: random questions from every level", kind: "Quiz", run: () => go("quiz", () => { $("#quiz-level").value = "exam"; renderQuiz(); }) },
     { label: "Unit file X-ray", kind: "Section", run: () => go("xray") },
-    { label: "Troubleshoot: search an error message", kind: "Section", run: () => go("doctor", () => $("#doctor-q").focus()) },
+    { label: "Fix: troubleshoot an error", kind: "Section", run: () => go("doctor", () => $("#doctor-q").focus()) },
     { label: "Cheat sheet", kind: "Section", run: () => go("cheats", () => $("#cheat-q").focus()) },
     { label: "Linux internals", kind: "Section", run: () => go("arch") },
     ...Q.levels.map((lv) => ({ label: `Quiz: ${lv.id} · ${lv.title}`, kind: "Quiz", run: () => go("quiz", () => { $("#quiz-level").value = lv.id; renderQuiz(); }) })),
@@ -458,6 +462,10 @@
   $("#xray-clear").addEventListener("click", () => { $("#xray-input").value = ""; $("#xray-error").hidden = true; $("#xray-result").hidden = true; $("#xray-view").hidden = true; });
   $("#xray-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) explainInput(); });
   $("#doctor-q").addEventListener("input", renderDoctorList);
+  // The home page's "Something broken?" box hands the pasted error to Troubleshoot.
+  const doorGo = () => { $("#doctor-q").value = $("#door-q").value; go("doctor", () => { renderDoctorList(); $("#doctor-q").focus(); }); };
+  $("#door-go").addEventListener("click", doorGo);
+  $("#door-q").addEventListener("keydown", (e) => { if (e.key === "Enter") doorGo(); });
   $("#cheat-q").addEventListener("input", renderCheats);
   $("#forget").addEventListener("click", forgetEverything);
   $("#cta-start").addEventListener("click", (e) => { e.preventDefault(); location.hash = "path"; show(); scrollToEl($("#path-title")); });

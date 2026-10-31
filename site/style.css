@@ -91,6 +91,13 @@ h1, h2, h3, h4 { letter-spacing: -.03em; line-height: 1.1; }
 .top nav a { color: var(--text); opacity: .75; padding: 6px 12px; border-radius: 99px; white-space: nowrap; font-size: .82rem; transition: opacity .2s, background .2s; }
 .top nav a:hover { opacity: 1; text-decoration: none; }
 .top nav a[aria-current="page"] { opacity: 1; background: var(--code-bg); font-weight: 500; }
+/* Two modes: Learn (the course) and Fix (the reference for something broken now). */
+.top nav { align-items: center; gap: 10px; }
+.mode { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 99px; }
+.mode-k { font-size: .7rem; font-weight: 600; padding: 0 6px 0 10px; color: var(--accent); }
+.mode.fix { background: var(--warn-soft); }
+.mode.fix .mode-k { color: var(--warn-text); }
+.mode.fix a[aria-current="page"] { background: var(--surface); }
 .gh { display: inline-flex; align-items: center; font-size: .8rem; font-weight: 500; color: var(--on-accent); background: var(--accent); border-radius: 99px; padding: 6px 14px; transition: background .2s; }
 .gh:hover { background: var(--accent-hover); text-decoration: none; }
 
@@ -109,6 +116,21 @@ main { padding-bottom: 64px; min-height: 70vh; }
 .btn:active { transform: scale(.98); }
 .link { font-size: 1.02rem; }
 .link::after { content: " ›"; }
+/* The doors sit in a full-width row under the headline and the stage. */
+.hero-grid > .doors { grid-column: 1 / -1; grid-row: 2; }
+.doors { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+.door { padding: 24px 26px; border-radius: var(--radius); border: 1px solid var(--hair); background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.door h2 { margin: 0; font-size: 1.35rem; letter-spacing: -.02em; }
+.door p { margin: 0; color: var(--muted); }
+.door .door-k { font-size: .85rem; font-weight: 600; color: var(--accent); }
+.door.fix { background: var(--warn-soft); border-color: transparent; }
+.door.fix .door-k { color: var(--warn-text); }
+.door .ctas { margin-top: 10px; }
+.door-search { display: flex; gap: 8px; margin-top: 10px; }
+.door-search input { flex: 1; min-width: 0; border-radius: 99px; }
+.mode-banner { margin: 32px 0 0; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--warn-soft); font-size: .95rem; }
+.mode-banner + h2 { margin-top: 32px; }
+.mode-banner strong { color: var(--warn-text); }
 
 .stage { position: relative; background: var(--stage); color: var(--stage-text); border-radius: 30px; padding: 30px; min-height: 340px; overflow: hidden; isolation: isolate; box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--accent-2) 45%, transparent); }
 .stage::before { content: ""; position: absolute; inset: -40% -10% auto; height: 120%; background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 26%, transparent), transparent 70%); z-index: -1; pointer-events: none; }
@@ -264,6 +286,9 @@ select:focus, input[type="search"]:focus { border-color: var(--accent); outline:
 .fix p { margin: 0; }
 .fix-error { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--bad); }
 .doctor-practise { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.learn-it { margin-top: 24px; padding: 18px 20px; border-radius: var(--radius-sm); background: var(--accent-soft); border: 1px solid var(--hair); }
+.fix .learn-it h4 { margin-top: 0; color: var(--text); }
+.learn-it > .note { margin-top: 12px; }
 
 /* Cheat sheet */
 .group { font-size: 1rem; color: var(--muted); margin: 28px 0 10px; font-weight: 600; }
@@ -447,6 +472,7 @@ kbd { font: 500 .72rem/1 var(--mono); color: var(--muted); background: var(--sur
 }
 @media (max-width: 860px) {
   .hero-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .hero-grid > .doors { grid-row: auto; }
   .xray, .pg-body { grid-template-columns: minmax(0, 1fr); }
   .doctor-group, .pg-group { grid-template-columns: 1fr; }
   .doctor-group-name, .pg-group-name { min-height: 0; }
@@ -462,7 +488,11 @@ kbd { font: 500 .72rem/1 var(--mono); color: var(--muted); background: var(--sur
   .brand { flex: 1; }
   .kbd-btn span { display: none; }
   .kbd-btn { padding: 5px; }
-  .top nav { order: 3; flex-basis: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .top nav { order: 3; flex-basis: 100%; flex-wrap: wrap; gap: 6px; }
+  .mode { flex-wrap: wrap; justify-content: center; }
+  .mode-k { padding: 0 4px 0 8px; }
+  .doors { grid-template-columns: 1fr; }
+  .door-search { flex-direction: column; }
   .top nav a { padding: 6px 4px; text-align: center; }
   .hero { padding: 40px 0 8px; }
   .stage { padding: 20px; border-radius: 24px; min-height: 0; }
