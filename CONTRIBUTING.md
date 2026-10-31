@@ -16,3 +16,6 @@ Before opening a pull request:
 - After editing `site/data.js`, run `node scripts/build-problems.js` to regenerate `site/problems.html`.
 - Run every test in the README before opening a pull request.
 
+## Personal data
+
+Never include real personal data in issues, pull requests, examples, logs or tests: no Aadhaar, PAN, phone numbers, personal emails, addresses, bank details or customer records. Use made-up values and reserved domains such as `example.com`. See [PRIVACY.md](PRIVACY.md).

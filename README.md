@@ -136,7 +136,7 @@ To report a vulnerability, follow [SECURITY.md](./SECURITY.md): contact the repo
 
 ## Privacy and cost
 
-The site runs entirely in your browser: no accounts, cookies, trackers or database. Your progress stays in your own browser's storage. It is hosted free on GitHub Pages, and nothing in this repository costs money to use.
+The site runs entirely in your browser: no accounts, cookies, trackers or database. Your progress stays in your own browser's storage. It is hosted free on GitHub Pages, and nothing in this repository costs money to use. See [PRIVACY.md](PRIVACY.md) for the full privacy policy.
 
 ## License and trademarks
 MIT. See [LICENSE](./LICENSE). Linux® is the registered trademark of Linus Torvalds in the U.S. and other countries. This project is independent and not affiliated with the Linux Foundation.
