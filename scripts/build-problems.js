@@ -43,7 +43,7 @@ function problems() {
       </section>`;
   };
   return `<!doctype html>
-<html lang="en">
+<html lang="en" data-mode="fix">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -62,7 +62,20 @@ function problems() {
   <header class="top">
     <div class="wrap top-inner">
       <a class="brand" href="index.html" aria-label="DevOps Nimbus Linux, home"><img class="mark" src="nimbus.svg" alt="" width="37" height="22"> DevOps Nimbus <span class="brand-track">Linux</span></a>
-      <nav aria-label="Sections"><a href="index.html#path">Path</a><a href="index.html#doctor">Troubleshoot</a><a href="index.html#cheats">Cheat sheet</a></nav>
+      <nav class="switch" aria-label="Mode">
+        <a class="sw learn" href="index.html#path"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 3.2c1.8-.6 3.6-.4 5.5.8 1.9-1.2 3.7-1.4 5.5-.8v9c-1.8-.6-3.6-.4-5.5.8-1.9-1.2-3.7-1.4-5.5-.8zM8 4v9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Learn</a>
+        <a class="sw fix" href="index.html#doctor" aria-current="true"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M10.2 2.4a3.3 3.3 0 0 0-3.9 4.3L2.6 10.4a1.4 1.4 0 0 0 2 2l3.7-3.7a3.3 3.3 0 0 0 4.3-3.9l-2 2-1.7-.4-.4-1.7z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Fix</a>
+      </nav>
+    </div>
+    <div class="wrap sub-row">
+      <nav class="subnav" aria-label="Sections">
+        <div class="mode fix" role="group" aria-label="Fix">
+          <span class="mode-k">Something broken? Find the cause and the fix</span>
+          <a href="index.html#doctor">Troubleshoot</a>
+          <a href="index.html#cheats">Cheat sheet</a>
+          <a href="problems.html" aria-current="page">All errors</a>
+        </div>
+      </nav>
     </div>
   </header>
   <main class="wrap problems">
