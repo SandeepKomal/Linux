@@ -640,12 +640,12 @@ kbd { font: 500 .72rem/1 var(--mono); color: var(--muted); background: var(--sur
 
 /* While a feature's code is still arriving, its space shows calm grey lines in the shape it will
    fill, and the first screen fades in once as one piece. Both stop for reduced motion. */
-.pg-map:empty, .pg-try:empty, #pg-out:empty, #arch:empty, #quiz-list:empty, #xray-pick:empty {
+.pg-map:empty, .pg-try:empty, main:has(.pg-scenarios:empty) #pg-out:empty, #arch:empty, #quiz-list:empty, #xray-pick:empty {
   border-radius: var(--radius-sm);
   background: repeating-linear-gradient(to bottom, var(--code-bg) 0 12px, transparent 12px 28px) 0 0 / 100% 100% no-repeat;
   animation: nimbus-skel 1.6s ease-in-out infinite alternate;
 }
-#pg-out:empty { background-image: repeating-linear-gradient(to bottom, color-mix(in srgb, #fff 9%, transparent) 0 10px, transparent 10px 24px); background-size: 70% 106px; background-repeat: no-repeat; background-origin: content-box; background-clip: content-box; }
+main:has(.pg-scenarios:empty) #pg-out:empty { background-image: repeating-linear-gradient(to bottom, color-mix(in srgb, #fff 9%, transparent) 0 10px, transparent 10px 24px); background-size: 70% 106px; background-repeat: no-repeat; background-origin: content-box; background-clip: content-box; }
 #quiz-list:empty { min-height: 320px; }
 #arch:empty { min-height: min(647px, calc(53.9vw + 43px)); border: 1px solid var(--hair); border-radius: var(--radius); background: var(--surface) linear-gradient(var(--code-bg), var(--code-bg)) 50% 50% / calc(100% - 56px) calc(100% - 56px) no-repeat; }
 #xray-pick:empty { display: flex; width: min(1000px, 100%); height: 41px; border-radius: 18px; background: var(--code-bg); }
@@ -658,6 +658,6 @@ kbd { font: 500 .72rem/1 var(--mono); color: var(--muted); background: var(--sur
 @media (max-width: 535px) { .pg-try:empty { min-height: 67px; } }
 @media (max-width: 440px) { #xray-pick:empty { height: 145px; } }
 @media (prefers-reduced-motion: reduce) {
-  .pg-map:empty, .pg-try:empty, #pg-out:empty, #arch:empty, #quiz-list:empty, #xray-pick:empty { animation: none; }
+  .pg-map:empty, .pg-try:empty, main:has(.pg-scenarios:empty) #pg-out:empty, #arch:empty, #quiz-list:empty, #xray-pick:empty { animation: none; }
   #stage:not(:empty), #stats:not(:empty), #engage:not(:empty), #stages:not(:empty), #levels:not(:empty) { animation: none; }
 }
