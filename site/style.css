@@ -675,8 +675,8 @@ main:has(.pg-scenarios:empty) #pg-out:empty { background-image: repeating-linear
 @media (prefers-color-scheme: dark) { :root { --accent-edge: var(--accent-fill); } }
 @property --edge { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 .door, .tile, .stage-card { position: relative; }
-.door::before, .tile::before, .stage-card::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 2px; pointer-events: none;
-  background: conic-gradient(from var(--edge), transparent 0 74%, color-mix(in srgb, var(--accent-edge) 35%, transparent) 86%, var(--accent-edge) 96%, transparent 100%);
+.door::before, .tile::before, .stage-card::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 2.5px; pointer-events: none;
+  background: conic-gradient(from var(--edge), transparent 0 64%, color-mix(in srgb, var(--accent-edge) 55%, transparent) 80%, var(--accent-edge) 90%, var(--accent-edge) 97%, transparent 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   animation: edge 7s linear infinite; animation-delay: calc(var(--i, 0) * -1.3s); }
